@@ -126,12 +126,13 @@
 - [x] Home page with leaderboard preview
 - [x] Login/Signup page
 - [x] User profile page (stub)
-- [x] Shop page (stub)
-- [x] Leaderboard page (stub)
+- [x] Shop page (functional)
+- [x] Leaderboard page (functional)
 - [x] Premium subscription page (stub)
 - [x] Events page (stub)
-- [x] Daily tasks page (stub)
+- [x] Daily tasks page (functional)
 - [x] Achievements page (stub)
+- [x] Premium Dashboard (functional)
 - [x] Game lobby/selection page (stub)
 - [ ] Individual game pages (20 games)
 - [x] Admin dashboard (stub)

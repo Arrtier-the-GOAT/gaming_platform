@@ -16,6 +16,9 @@ import DailyTasks from "./pages/DailyTasks";
 import Achievements from "./pages/Achievements";
 import GameLobby from "./pages/GameLobby";
 import AdminDashboard from "./pages/AdminDashboard";
+import GameTutorials from "./pages/GameTutorials";
+import Social from "./pages/Social";
+import Analytics from "./pages/Analytics";
 import AdminShop from "./pages/AdminShop";
 import AdminPremium from "./pages/AdminPremium";
 import AdminRewards from "./pages/AdminRewards";
@@ -43,8 +46,9 @@ function Router() {
       <Route path={"/admin/premium"} component={AdminPremium} />
       <Route path={"/admin/rewards"} component={AdminRewards} />
       <Route path={"/admin/achievements"} component={AdminAchievements} />
-      <Route path={"/admin/events"} component={AdminEvents} />
-      
+      <Route path={"/tutorials"} component={GameTutorials} />
+      <Route path={"/social"} component={Social} />
+      <Route path={"/analytics"} component={Analytics} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

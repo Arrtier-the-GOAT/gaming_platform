@@ -145,3 +145,37 @@
 - [x] Payment gateway configuration (KBZ Pay, AYA Pay, UAB Pay)
 - [x] Admin account creation
 - [x] Final checkpoint before publishing
+
+
+## Remaining Features
+
+### OAuth & Database
+- [ ] Fix OAuth callback error
+- [ ] Apply database migration to production
+- [ ] Verify user registration flow
+
+### Real Payment Integration
+- [ ] KBZ Pay API integration
+- [ ] AYA Pay API integration
+- [ ] UAB Pay API integration
+- [ ] Automatic energy core crediting after payment
+
+### Game Tutorials & Help
+- [ ] Game tutorial system (per game)
+- [ ] Quick help tooltips
+- [ ] Game rules display
+- [ ] Tutorial completion tracking
+
+### Social Features
+- [ ] Friend list system
+- [ ] Friend request/accept/reject
+- [ ] In-game chat system
+- [ ] Multiplayer game invitations
+- [ ] Friend leaderboard comparison
+
+### Analytics Dashboard
+- [ ] User statistics page
+- [ ] Game performance tracking
+- [ ] Achievement progress visualization
+- [ ] Playtime analytics
+- [ ] Earnings history chart

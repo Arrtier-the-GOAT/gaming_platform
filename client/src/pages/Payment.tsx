@@ -12,6 +12,7 @@ export default function Payment() {
   const [selectedMethod, setSelectedMethod] = useState<"kbz" | "aya" | "uab">("kbz");
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [telegramLink, setTelegramLink] = useState("");
 
   const handleInitiatePayment = () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -127,6 +128,20 @@ export default function Payment() {
               </p>
             </div>
 
+            {/* Telegram Channel Link */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Telegram Channel Link (Optional)</label>
+              <Input
+                type="text"
+                placeholder="https://t.me/your_channel"
+                value={telegramLink}
+                onChange={(e) => setTelegramLink(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste your Telegram channel link to receive payment confirmations
+              </p>
+            </div>
+
             {/* Payment Methods */}
             <div className="space-y-3">
               <label className="text-sm font-medium">Payment Method</label>
@@ -233,6 +248,28 @@ export default function Payment() {
                       </button>
                     </div>
                   </div>
+
+                  {telegramLink && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Telegram Channel</p>
+                      <div className="flex items-center justify-between">
+                        <a
+                          href={telegramLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm font-medium truncate"
+                        >
+                          {telegramLink}
+                        </a>
+                        <button
+                          onClick={() => copyToClipboard(telegramLink)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -242,6 +279,7 @@ export default function Payment() {
                   <li>• Include the reference number in your transfer</li>
                   <li>• Funds will be credited within 5-10 minutes</li>
                   <li>• Keep your transaction receipt for records</li>
+                  {telegramLink && <li>• Confirmation will be sent to your Telegram channel</li>}
                 </ul>
               </div>
 

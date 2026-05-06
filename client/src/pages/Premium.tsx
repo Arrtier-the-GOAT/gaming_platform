@@ -1,37 +1,23 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Sparkles, Zap, Gift, Trophy, Users, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Sparkles, Check, Zap, Gift, Trophy, Users } from "lucide-react";
-import { useState } from "react";
 
 const PAYMENT_DETAILS = {
-  phoneNumber: "09787398133",
   name: "Aung Han Thin",
+  phoneNumber: "09787398133",
 };
 
 const PREMIUM_PLANS = [
   {
     id: 1,
     duration: "1 Month",
+    description: "Try premium features",
     price: 10000,
     pricePerDay: 333,
-    description: "Try premium features",
-    features: [
-      "2x leaderboard points",
-      "Exclusive rewards",
-      "Priority support",
-      "Ad-free experience",
-    ],
-    popular: false,
-  },
-  {
-    id: 2,
-    duration: "3 Months",
-    price: 30000,
-    pricePerDay: 333,
-    description: "Best value",
     features: [
       "2x leaderboard points",
       "Exclusive rewards",
@@ -43,11 +29,29 @@ const PREMIUM_PLANS = [
     popular: false,
   },
   {
+    id: 2,
+    duration: "3 Months",
+    description: "Best value",
+    price: 30000,
+    pricePerDay: 333,
+    features: [
+      "2x leaderboard points",
+      "Exclusive rewards",
+      "Priority support",
+      "Ad-free experience",
+      "Bonus rewards",
+      "Early access to new games",
+      "Monthly bonus rewards",
+      "Custom profile badge",
+    ],
+    popular: false,
+  },
+  {
     id: 3,
     duration: "5 Months",
+    description: "Best savings",
     price: 70000,
     pricePerDay: 467,
-    description: "Best savings",
     features: [
       "3x leaderboard points",
       "VIP status",
@@ -68,6 +72,8 @@ export default function Premium() {
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<typeof PREMIUM_PLANS[0] | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
   const userProfile = trpc.user.getProfile.useQuery();
   const purchasePremium = trpc.premium.purchasePremium.useMutation();
 
@@ -80,7 +86,6 @@ export default function Premium() {
       return;
     }
 
-    // Calculate discount if user has 5-month premium
     let finalPrice = selectedPlanData.price;
     if (userProfile.data?.isPremium && userProfile.data?.premiumExpiresAt) {
       const now = new Date();
@@ -92,36 +97,37 @@ export default function Premium() {
     }
 
     if ((userProfile.data?.energyCoreBalance || 0) < finalPrice) {
-      toast.error(`Insufficient balance. You need ${finalPrice} EC`);
+      toast.error(`Insufficient balance. You need ${finalPrice} MMK`);
       return;
     }
 
-    // Show payment modal
     setSelectedPlanForPayment({...selectedPlanData, price: finalPrice});
     setShowPaymentModal(true);
+    setPaymentConfirmed(false);
+    setTransactionId("");
   };
 
-  const handleConfirmPayment = () => {
-    if (!selectedPlanForPayment) return;
+  const handleConfirmPayment = async () => {
+    if (!selectedPlanForPayment || transactionId.length !== 5) {
+      toast.error("Please enter a valid 5-digit transaction ID");
+      return;
+    }
 
-    const planId = selectedPlanForPayment.id;
-    const durationMonths = planId === 1 ? 1 : planId === 2 ? 3 : 12;
-
-    purchasePremium.mutate(
-      { durationMonths, paymentMethod: "kbz_pay" },
-      {
-        onSuccess: () => {
-          toast.success(`Premium activated for ${selectedPlanForPayment.duration}!`);
-          userProfile.refetch();
-          setSelectedPlan(null);
-          setShowPaymentModal(false);
-          setSelectedPlanForPayment(null);
-        },
-        onError: (error: any) => {
-          toast.error(error.message || "Purchase failed");
-        },
-      }
-    );
+    try {
+      await purchasePremium.mutateAsync({
+        durationMonths: selectedPlanForPayment.id === 1 ? 1 : selectedPlanForPayment.id === 2 ? 3 : 5,
+        paymentMethod: "kbz_pay",
+      });
+      
+      toast.success("Premium activated successfully!");
+      setShowPaymentModal(false);
+      setSelectedPlanForPayment(null);
+      setPaymentConfirmed(false);
+      setTransactionId("");
+      userProfile.refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Purchase failed");
+    }
   };
 
   const isPremium = userProfile.data?.isPremium;
@@ -249,27 +255,15 @@ export default function Premium() {
                   {/* Purchase Button */}
                   <Button
                     onClick={() => handlePurchase(plan.id)}
-                    disabled={(userProfile.data?.energyCoreBalance || 0) < plan.price || isPremium}
-                    className={`w-full h-11 text-base font-semibold ${
+                    disabled={(userProfile.data?.energyCoreBalance || 0) < plan.price && !userProfile.data?.isPremium}
+                    className={`w-full ${
                       plan.popular
-                        ? "bg-purple-600 hover:bg-purple-700 text-white"
-                        : "bg-gray-200 hover:bg-gray-300"
+                        ? "bg-purple-600 hover:bg-purple-700"
+                        : "bg-blue-600 hover:bg-blue-700"
                     }`}
                   >
-                    {"Upgrade Now"}
+                    Upgrade Now
                   </Button>
-
-                  {userProfile.data?.isPremium && userProfile.data?.premiumExpiresAt && (() => {
-                    const now = new Date();
-                    const expiresAt = new Date(userProfile.data.premiumExpiresAt);
-                    const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                    return daysLeft >= 140 ? (
-                      <div className="bg-green-100 border border-green-300 rounded p-2 text-center">
-                        <p className="text-xs font-semibold text-green-700">20% Discount Applied!</p>
-                        <p className="text-sm font-bold text-green-600">{Math.floor(plan.price * 0.8).toLocaleString()} EC</p>
-                      </div>
-                    ) : null;
-                  })()}
                   {(userProfile.data?.energyCoreBalance || 0) < plan.price && !userProfile.data?.isPremium && (
                     <p className="text-xs text-red-600 text-center">
                       You need {(plan.price - (userProfile.data?.energyCoreBalance || 0)).toLocaleString()} more MMK
@@ -336,66 +330,105 @@ export default function Premium() {
                   </div>
                 </div>
 
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
-                  <h3 className="font-semibold text-purple-900">Send Payment To:</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Name</p>
-                      <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
-                        <p className="font-medium">{PAYMENT_DETAILS.name}</p>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(PAYMENT_DETAILS.name);
-                            toast.success("Name copied!");
-                          }}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
-                        >
-                          Copy
-                        </button>
+                {!paymentConfirmed ? (
+                  <>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+                      <h3 className="font-semibold text-purple-900">Send Payment To:</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Name</p>
+                          <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
+                            <p className="font-medium">{PAYMENT_DETAILS.name}</p>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(PAYMENT_DETAILS.name);
+                                toast.success("Name copied!");
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Phone Number</p>
+                          <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
+                            <p className="font-medium">{PAYMENT_DETAILS.phoneNumber}</p>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(PAYMENT_DETAILS.phoneNumber);
+                                toast.success("Phone number copied!");
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Phone Number</p>
-                      <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
-                        <p className="font-medium">{PAYMENT_DETAILS.phoneNumber}</p>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(PAYMENT_DETAILS.phoneNumber);
-                            toast.success("Phone number copied!");
-                          }}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
-                        >
-                          Copy
-                        </button>
-                      </div>
+
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-xs text-yellow-800">
+                        📝 After payment, click "I've Sent Payment" to enter your transaction ID for verification.
+                      </p>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-xs text-yellow-800">
-                    📝 After payment, your premium will be activated automatically. Please allow up to 5 minutes for processing.
-                  </p>
-                </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowPaymentModal(false);
+                          setSelectedPlanForPayment(null);
+                          setPaymentConfirmed(false);
+                          setTransactionId("");
+                        }}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => setPaymentConfirmed(true)}
+                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                      >
+                        I've Sent Payment
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+                      <h3 className="font-semibold text-green-900">Enter Transaction ID</h3>
+                      <p className="text-sm text-green-700">Please enter the 5-digit transaction ID from your bank transfer to verify the payment.</p>
+                      <input
+                        type="text"
+                        placeholder="e.g., 12345"
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                        maxLength={5}
+                        className="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-center text-2xl font-bold tracking-widest"
+                      />
+                    </div>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      setSelectedPlanForPayment(null);
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirmPayment}
-                    disabled={purchasePremium.isPending}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50"
-                  >
-                    {purchasePremium.isPending ? "Processing..." : "I've Sent Payment"}
-                  </button>
-                </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setPaymentConfirmed(false);
+                          setTransactionId("");
+                        }}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        Back
+                      </button>
+                      <button
+                        onClick={handleConfirmPayment}
+                        disabled={transactionId.length !== 5 || purchasePremium.isPending}
+                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {purchasePremium.isPending ? "Verifying..." : "Verify & Activate"}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

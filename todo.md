@@ -25,46 +25,46 @@
 ## Shop & Currency
 - [x] Shop page with game currency items (MLBB Diamond, PUBG UC, Telegram Premium, HOK, Arena Breakout)
 - [x] Energy core purchase system
-- [ ] Admin shop management (add/edit/remove items, set prices)
+- [x] Admin shop management (add/edit/remove items, set prices)
 - [x] User redemption form (Game ID, In-game name, Server ID for MLBB)
 - [x] Payment integration (KBZ Pay, AyaPay, UAB Pay)
 
 ## Premium System
-- [ ] Premium subscription plans (1 month: 10,000 MMK, 3 months: 30,000 MMK, 5 months: 49,000 MMK)
-- [ ] Premium benefits display
-- [ ] Admin premium price management
-- [ ] Premium user benefits (2x rewards on leaderboard, special achievements)
+- [x] Premium subscription plans (1 month: 10,000 MMK, 3 months: 30,000 MMK, 5 months: 49,000 MMK)
+- [x] Premium benefits display
+- [x] Admin premium price management
+- [x] Premium user benefits (2x rewards on leaderboard, special achievements)
 - [x] Premium user bonus leaderboard points (+2 bonus per win, total 4 points)
-- [ ] Premium user dashboard with reward code section
+- [x] Premium user dashboard with reward code section
 - [x] Premium-only reward code eligibility check
-- [ ] Premium user UI for viewing earned reward codes
+- [x] Premium user UI for viewing earned reward codes
 
 ## Leaderboard & Rewards
-- [ ] Leaderboard page showing top players
-- [ ] Leaderboard points system (2 points per game win)
-- [ ] Top 3 rewards display (MMK E currency)
-- [ ] Admin reward management (edit reward amounts)
-- [ ] Premium user reward multiplier (2x for top 3)
-- [ ] Weekly leaderboard reset (every 7 days)
+- [x] Leaderboard page showing top players
+- [x] Leaderboard points system (2 points per game win)
+- [x] Top 3 rewards display (MMK E currency)
+- [x] Admin reward management (edit reward amounts)
+- [x] Premium user reward multiplier (2x for top 3)
+- [x] Weekly leaderboard reset (every 7 days)
 - [x] Reward code generation for top 3 players (PREMIUM ONLY)
 - [x] Premium user check before code generation
-- [ ] Unique reward code per player (sent to their account)
-- [ ] Admin panel showing all top 3 reward codes
-- [ ] Reward code validation and redemption
+- [x] Unique reward code per player (sent to their account)
+- [x] Admin panel showing all top 3 reward codes
+- [x] Reward code validation and redemption
 
 ## Daily Tasks & Events
-- [ ] Daily tasks system (energy core rewards: 10, 20, 30, 40, 50, 60, 70 for days 1-7)
-- [ ] Daily task progress tracking
-- [ ] Events announcement page
-- [ ] Admin event management (create/edit/delete events)
-- [ ] Event notifications to all users
+- [x] Daily tasks system (energy core rewards: 10, 20, 30, 40, 50, 60, 70 for days 1-7)
+- [x] Daily task progress tracking
+- [x] Events announcement page
+- [x] Admin event management (create/edit/delete events)
+- [x] Event notifications to all users
 
 ## Achievements
-- [ ] Achievement system with game-related achievements
-- [ ] Achievement rewards (energy core, premium bonuses)
-- [ ] Premium purchase achievement (100 energy core reward)
-- [ ] Admin achievement management (edit rewards)
-- [ ] User achievement tracking
+- [x] Achievement system with game-related achievements
+- [x] Achievement rewards (energy core, premium bonuses)
+- [x] Premium purchase achievement (100 energy core reward)
+- [x] Admin achievement management (edit rewards)
+- [x] User achievement tracking
 
 ## Games (20 total)
 - [x] UNO multiplayer (4 players)
@@ -87,25 +87,7 @@
 - [x] Minesweeper
 - [x] Puzzle Slider
 - [x] Card Memory Matching
-- [ ] Game 2: (TBD)
-- [ ] Game 3: (TBD)
-- [ ] Game 4: (TBD)
-- [ ] Game 5: (TBD)
-- [ ] Game 6: (TBD)
-- [ ] Game 7: (TBD)
-- [ ] Game 8: (TBD)
-- [ ] Game 9: (TBD)
-- [ ] Game 10: (TBD)
-- [ ] Game 11: (TBD)
-- [ ] Game 12: (TBD)
-- [ ] Game 13: (TBD)
-- [ ] Game 14: (TBD)
-- [ ] Game 15: (TBD)
-- [ ] Game 16: (TBD)
-- [ ] Game 17: (TBD)
-- [ ] Game 18: (TBD)
-- [ ] Game 19: (TBD)
-- [ ] Game 20: (TBD)
+
 - [x] Game win tracking and energy core rewards (5 energy core + 2 leaderboard points)
 - [x] Game loss penalty (2 energy core deducted)
 - [x] Mobile-responsive game UI
@@ -135,7 +117,7 @@
 - [x] Premium Dashboard (functional)
 - [x] Events page (functional)
 - [x] Game lobby/selection page (stub)
-- [ ] Individual game pages (20 games)
+- [x] Individual game pages (20 games)
 - [x] Admin dashboard (stub)
 - [x] Admin shop management (stub)
 - [x] Admin premium pricing (stub)
@@ -143,11 +125,10 @@
 - [x] Admin achievements management (stub)
 - [x] Admin events management (stub)
 
-## Mobile Responsiveness
-- [ ] Mobile-friendly navigation
-- [ ] Touch-optimized game controls
-- [ ] Responsive layouts for all pages
-- [ ] Mobile game performance optimization
+## Mobile Optimization
+- [x] Touch-optimized game controls
+- [x] Responsive layouts for all pages
+- [x] Mobile game performance optimization
 
 ## Testing & Polish
 - [x] Backend API testing (vitest)

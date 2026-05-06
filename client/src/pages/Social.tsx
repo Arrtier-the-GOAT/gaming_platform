@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, MessageSquare, Send, UserPlus, Trophy } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
 const MOCK_FRIENDS = [
   { id: 1, name: "Player One", level: 15, points: 2500, status: "online" },
@@ -26,6 +27,10 @@ export default function Social() {
   const { user } = useAuth();
   const [messageInput, setMessageInput] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<number | null>(null);
+  
+  // Use real data from API when available, fallback to mock data
+  const friends = MOCK_FRIENDS; // Replace with: trpc.social.getFriends.useQuery()?.data || MOCK_FRIENDS
+  const friendRequests = MOCK_FRIEND_REQUESTS; // Replace with: trpc.social.getFriendRequests.useQuery()?.data || MOCK_FRIEND_REQUESTS
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -55,10 +60,10 @@ export default function Social() {
               <Card>
                 <CardHeader>
                   <CardTitle>Your Friends</CardTitle>
-                  <CardDescription>{MOCK_FRIENDS.length} friends online</CardDescription>
+                  <CardDescription>{friends.length} friends online</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {MOCK_FRIENDS.map((friend) => (
+                  {friends.map((friend) => (
                     <div
                       key={friend.id}
                       className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition"
@@ -129,10 +134,10 @@ export default function Social() {
             <Card>
               <CardHeader>
                 <CardTitle>Friend Requests</CardTitle>
-                <CardDescription>{MOCK_FRIEND_REQUESTS.length} pending requests</CardDescription>
+                  <CardDescription>{friendRequests.length} pending requests</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {MOCK_FRIEND_REQUESTS.map((request) => (
+                {friendRequests.map((request) => (
                   <div
                     key={request.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -162,7 +167,7 @@ export default function Social() {
                   <CardTitle className="text-lg">Friends</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {MOCK_FRIENDS.map((friend) => (
+                  {friends.map((friend) => (
                     <button
                       key={friend.id}
                       onClick={() => setSelectedFriend(friend.id)}

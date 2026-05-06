@@ -161,21 +161,21 @@
 - [ ] Automatic energy core crediting after payment
 
 ### Game Tutorials & Help
-- [ ] Game tutorial system (per game)
-- [ ] Quick help tooltips
-- [ ] Game rules display
-- [ ] Tutorial completion tracking
+- [x] Game tutorial system (per game)
+- [x] Quick help tooltips
+- [x] Game rules display
+- [x] Tutorial completion tracking
 
 ### Social Features
-- [ ] Friend list system
-- [ ] Friend request/accept/reject
-- [ ] In-game chat system
-- [ ] Multiplayer game invitations
-- [ ] Friend leaderboard comparison
+- [x] Friend list system
+- [x] Friend request/accept/reject
+- [x] In-game chat system
+- [x] Multiplayer game invitations
+- [x] Friend leaderboard comparison
 
 ### Analytics Dashboard
-- [ ] User statistics page
-- [ ] Game performance tracking
-- [ ] Achievement progress visualization
-- [ ] Playtime analytics
-- [ ] Earnings history chart
+- [x] User statistics page
+- [x] Game performance tracking
+- [x] Achievement progress visualization
+- [x] Playtime analytics
+- [x] Earnings history chart

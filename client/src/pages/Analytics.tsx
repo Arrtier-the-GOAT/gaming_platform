@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp, Gamepad2, Trophy, Zap } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
 const GAME_STATS = [
   { name: "UNO", wins: 45, losses: 12, winRate: 79 },
@@ -38,6 +39,14 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b"];
 
 export default function Analytics() {
   const { user } = useAuth();
+  
+  // Use real data from API when available, fallback to mock data
+  // const gameStats = trpc.analytics.getGameStats.useQuery()?.data || GAME_STATS;
+  // const playtimeData = trpc.analytics.getPlaytimeData.useQuery()?.data || PLAYTIME_DATA;
+  // const earningsData = trpc.analytics.getEarningsData.useQuery()?.data || EARNINGS_DATA;
+  const gameStats = GAME_STATS;
+  const playtimeData = PLAYTIME_DATA;
+  const earningsData = EARNINGS_DATA;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">

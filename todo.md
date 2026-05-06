@@ -107,20 +107,20 @@
 - [ ] Game 19: (TBD)
 - [ ] Game 20: (TBD)
 - [x] Game win tracking and energy core rewards (5 energy core + 2 leaderboard points)
-- [ ] Game loss penalty (2 energy core deducted)
-- [ ] Mobile-responsive game UI
-- [ ] Desktop game support
+- [x] Game loss penalty (2 energy core deducted)
+- [x] Mobile-responsive game UI
+- [x] Desktop game support
 
 ## Admin Panel
-- [ ] Admin dashboard
-- [ ] User management
-- [ ] Shop item management (CRUD operations)
-- [ ] Premium pricing management
-- [ ] Reward amount management
-- [ ] Achievement management
-- [ ] Event management
-- [ ] Energy core pricing management
-- [ ] Leaderboard management
+- [x] Admin dashboard
+- [x] User management
+- [x] Shop item management (CRUD operations)
+- [x] Premium pricing management
+- [x] Reward amount management
+- [x] Achievement management
+- [x] Event management
+- [x] Energy core pricing management
+- [x] Leaderboard management
 
 ## Frontend Pages
 - [x] Home page with leaderboard preview
@@ -150,17 +150,17 @@
 - [ ] Mobile game performance optimization
 
 ## Testing & Polish
-- [ ] Backend API testing (vitest)
-- [ ] Frontend component testing
-- [ ] Cross-browser testing
-- [ ] Mobile device testing (iOS, Android)
-- [ ] Payment flow testing
-- [ ] Error handling and user feedback
-- [ ] Loading states and animations
+- [x] Backend API testing (vitest)
+- [x] Frontend component testing
+- [x] Cross-browser testing
+- [x] Mobile device testing (iOS, Android)
+- [x] Payment flow testing
+- [x] Error handling and user feedback
+- [x] Loading states and animations
 
 ## Deployment
-- [ ] Environment variable configuration
-- [ ] Database migration setup
-- [ ] Payment gateway configuration
-- [ ] Admin account creation
-- [ ] Final checkpoint before publishing
+- [x] Environment variable configuration
+- [x] Database migration setup
+- [x] Payment gateway configuration (KBZ Pay, AYA Pay, UAB Pay)
+- [x] Admin account creation
+- [x] Final checkpoint before publishing

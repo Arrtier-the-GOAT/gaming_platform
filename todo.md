@@ -41,6 +41,11 @@
 - [ ] Top 3 rewards display (MMK E currency)
 - [ ] Admin reward management (edit reward amounts)
 - [ ] Premium user reward multiplier (2x for top 3)
+- [ ] Weekly leaderboard reset (every 7 days)
+- [ ] Reward code generation for top 3 players
+- [ ] Unique reward code per player (sent to their account)
+- [ ] Admin panel showing all top 3 reward codes
+- [ ] Reward code validation and redemption
 
 ## Daily Tasks & Events
 - [ ] Daily tasks system (energy core rewards: 10, 20, 30, 40, 50, 60, 70 for days 1-7)
@@ -57,7 +62,26 @@
 - [ ] User achievement tracking
 
 ## Games (20 total)
-- [ ] UNO multiplayer (4 players)
+- [x] UNO multiplayer (4 players)
+- [ ] Chess
+- [ ] Checkers
+- [ ] Tic Tac Toe
+- [ ] Connect 4
+- [ ] Sudoku
+- [ ] 2048
+- [ ] Memory/Matching Game
+- [ ] Word Search
+- [ ] Crossword
+- [ ] Trivia Quiz
+- [ ] Hangman
+- [ ] Wordle Clone
+- [ ] Snake Game
+- [ ] Flappy Bird Clone
+- [ ] Breakout/Brick Breaker
+- [ ] Pac-Man Clone
+- [ ] Minesweeper
+- [ ] Puzzle Slider
+- [ ] Card Memory Matching
 - [ ] Game 2: (TBD)
 - [ ] Game 3: (TBD)
 - [ ] Game 4: (TBD)
@@ -77,7 +101,8 @@
 - [ ] Game 18: (TBD)
 - [ ] Game 19: (TBD)
 - [ ] Game 20: (TBD)
-- [ ] Game win tracking and energy core rewards (5 energy core + 2 leaderboard points)
+- [x] Game win tracking and energy core rewards (5 energy core + 2 leaderboard points)
+- [ ] Game loss penalty (2 energy core deducted)
 - [ ] Mobile-responsive game UI
 - [ ] Desktop game support
 

@@ -21,7 +21,9 @@ import {
   events,
   gameResults,
   energyCorePackages,
-  paymentTransactions
+  paymentTransactions,
+  rewardCodes,
+  weeklyLeaderboardSnapshots
 } from "../drizzle/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 
@@ -811,7 +813,7 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const energyCoreReward = input.won ? 5 : 0;
+        const energyCoreReward = input.won ? 5 : -2; // Win: +5, Loss: -2
         const leaderboardPointsReward = input.won ? 2 : 0;
 
         // Record game result
@@ -824,22 +826,21 @@ export const appRouter = router({
           leaderboardPointsEarned: leaderboardPointsReward,
         });
 
-        // Award energy core
+        // Award or deduct energy core
         const user = await db.select().from(users)
           .where(eq(users.id, ctx.user.id)).limit(1);
 
-        if (energyCoreReward > 0) {
-          await db.update(users)
-            .set({ energyCoreBalance: (user[0]?.energyCoreBalance || 0) + energyCoreReward })
-            .where(eq(users.id, ctx.user.id));
+        const newBalance = Math.max(0, (user[0]?.energyCoreBalance || 0) + energyCoreReward);
+        await db.update(users)
+          .set({ energyCoreBalance: newBalance })
+          .where(eq(users.id, ctx.user.id));
 
-          await db.insert(energyCoreTransactions).values({
-            userId: ctx.user.id,
-            amount: energyCoreReward,
-            type: "game_win",
-            description: `Won ${input.gameName}`,
-          });
-        }
+        await db.insert(energyCoreTransactions).values({
+          userId: ctx.user.id,
+          amount: energyCoreReward,
+          type: input.won ? "game_win" : "game_loss",
+          description: input.won ? `Won ${input.gameName}` : `Lost ${input.gameName} (-2 energy core)`,
+        });
 
         // Update leaderboard
         const leaderboard = await db.select().from(leaderboardPoints)
@@ -957,6 +958,67 @@ export const appRouter = router({
 
         return { success: true, newBalance };
       }),
+  }),
+
+  // Reward codes and weekly leaderboard
+  rewardCode: router({
+    generateWeeklyRewardCodes: adminProcedure.mutation(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const weekNumber = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1;
+
+      // Get top 3 players
+      const topPlayers = await db.select().from(leaderboardPoints)
+        .orderBy(desc(leaderboardPoints.totalPoints))
+        .limit(3);
+
+      if (topPlayers.length < 3) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Not enough players for rewards",
+        });
+      }
+
+      // Generate reward codes for top 3
+      const rewardAmounts = [5000, 3000, 1000];
+      const generatedCodes = [];
+
+      for (let i = 0; i < 3; i++) {
+        const code = Math.random().toString(36).substring(2, 14).toUpperCase();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        await db.insert(rewardCodes).values({
+          code,
+          userId: topPlayers[i].userId,
+          leaderboardPosition: i + 1,
+          weekNumber,
+          rewardAmount: rewardAmounts[i],
+          expiresAt,
+        });
+
+        generatedCodes.push({
+          position: i + 1,
+          code,
+          userId: topPlayers[i].userId,
+          amount: rewardAmounts[i],
+        });
+      }
+
+      return { success: true, codes: generatedCodes };
+    }),
+
+    getUserRewardCodes: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const codes = await db.select().from(rewardCodes)
+        .where(eq(rewardCodes.userId, ctx.user.id))
+        .orderBy(desc(rewardCodes.createdAt));
+
+      return codes;
+    }),
   }),
 });
 

@@ -184,11 +184,11 @@ export default function ChessGame() {
                       <button
                         key={`${rowIndex}-${colIndex}`}
                         onClick={() => handleSquareClick(rowIndex, colIndex)}
-                        className={`w-12 h-12 flex items-center justify-center text-2xl font-bold transition ${
+                        className={`w-8 h-8 md:w-12 md:h-12 flex items-center justify-center text-lg md:text-2xl font-bold transition touch-manipulation ${
                           isLight ? "bg-amber-100" : "bg-amber-700"
-                        } ${square.isSelected ? "ring-4 ring-blue-500" : ""} ${
-                          square.isPossibleMove ? "ring-2 ring-green-500" : ""
-                        } hover:opacity-80`}
+                        } ${square.isSelected ? "ring-2 md:ring-4 ring-blue-500" : ""} ${
+                          square.isPossibleMove ? "ring-1 md:ring-2 ring-green-500" : ""
+                        } hover:opacity-80 active:opacity-60`}
                       >
                         {getPieceSymbol(square.piece)}
                       </button>

@@ -269,10 +269,10 @@ export default function UNOGame() {
 
           {/* Discard pile */}
           <div className="flex justify-center">
-            <div className="w-24 h-32 rounded-lg border-2 border-dashed border-gray-400 flex items-center justify-center">
+            <div className="w-16 h-24 md:w-24 md:h-32 rounded-lg border-2 border-dashed border-gray-400 flex items-center justify-center">
               {topCard && (
                 <div
-                  className={`w-20 h-28 rounded flex items-center justify-center text-white font-bold text-2xl ${getCardColor(
+                  className={`w-14 h-20 md:w-20 md:h-28 rounded flex items-center justify-center text-white font-bold text-lg md:text-2xl ${getCardColor(
                     topCard.color
                   )}`}
                 >
@@ -302,9 +302,9 @@ export default function UNOGame() {
                         setSelectedCard(card.id);
                       }
                     }}
-                    className={`w-16 h-24 rounded text-white font-bold text-sm flex items-center justify-center transition ${getCardColor(
+                    className={`w-12 h-18 md:w-16 md:h-24 rounded text-white font-bold text-xs md:text-sm flex items-center justify-center transition touch-manipulation ${getCardColor(
                       card.color
-                    )} ${selectedCard === card.id ? "ring-4 ring-white" : "hover:opacity-80"}`}
+                    )} ${selectedCard === card.id ? "ring-2 md:ring-4 ring-white" : "hover:opacity-80 active:opacity-60"}`}
                   >
                     {card.number !== undefined ? card.number : card.action?.toUpperCase()}
                   </button>

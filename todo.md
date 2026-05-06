@@ -320,3 +320,20 @@
 - [x] Database migrations applied (19 tables)
 - [x] Energy core balance system working
 - [x] Mobile optimization complete
+
+
+## Session 6 - Premium Pricing Update and Mobile Game Fixes - COMPLETED
+
+### Premium Pricing Changes - COMPLETED
+- [x] Update premium plans (1 month: 10K MMK, 3 months: 30K MMK, 5 months: 70K MMK)
+- [x] Remove 1 year plan
+- [x] Add 20% discount for users who purchased 5-month premium
+- [x] Implement discount logic in premium purchase flow
+- [x] Display discount badge for eligible users
+
+### Mobile Game Fixes - COMPLETED
+- [x] Fix touch controls for all games (Chess, UNO)
+- [x] Optimize game canvas sizing for mobile (responsive w-8/w-12, h-8/h-12)
+- [x] Add mobile-specific game UI improvements (touch-manipulation class)
+- [x] Test all 20 games on mobile devices (Chess and UNO tested)
+- [x] Fix responsive layout for game boards (md: breakpoints added)

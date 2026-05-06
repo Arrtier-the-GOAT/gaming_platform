@@ -40,25 +40,26 @@ const PREMIUM_PLANS = [
       "Bonus 500 EC",
       "Early access to new games",
     ],
-    popular: true,
+    popular: false,
   },
   {
     id: 3,
-    duration: "1 Year",
-    price: 100000,
-    pricePerDay: 274,
-    description: "Maximum savings",
+    duration: "5 Months",
+    price: 70000,
+    pricePerDay: 467,
+    description: "Best savings",
     features: [
       "3x leaderboard points",
       "VIP status",
       "All exclusive rewards",
       "24/7 priority support",
-      "Bonus 2000 EC",
+      "Bonus 3000 EC",
       "Early access to new games",
       "Monthly bonus rewards",
       "Custom profile badge",
+      "20% discount on next purchase",
     ],
-    popular: false,
+    popular: true,
   },
 ];
 
@@ -79,13 +80,24 @@ export default function Premium() {
       return;
     }
 
-    if ((userProfile.data?.energyCoreBalance || 0) < selectedPlanData.price) {
-      toast.error(`Insufficient balance. You need ${selectedPlanData.price} EC`);
+    // Calculate discount if user has 5-month premium
+    let finalPrice = selectedPlanData.price;
+    if (userProfile.data?.isPremium && userProfile.data?.premiumExpiresAt) {
+      const now = new Date();
+      const expiresAt = new Date(userProfile.data.premiumExpiresAt);
+      const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysLeft >= 140) {
+        finalPrice = Math.floor(selectedPlanData.price * 0.8);
+      }
+    }
+
+    if ((userProfile.data?.energyCoreBalance || 0) < finalPrice) {
+      toast.error(`Insufficient balance. You need ${finalPrice} EC`);
       return;
     }
 
     // Show payment modal
-    setSelectedPlanForPayment(selectedPlanData);
+    setSelectedPlanForPayment({...selectedPlanData, price: finalPrice});
     setShowPaymentModal(true);
   };
 
@@ -247,7 +259,18 @@ export default function Premium() {
                     {"Upgrade Now"}
                   </Button>
 
-                  {(userProfile.data?.energyCoreBalance || 0) < plan.price && (
+                  {userProfile.data?.isPremium && userProfile.data?.premiumExpiresAt && (() => {
+                    const now = new Date();
+                    const expiresAt = new Date(userProfile.data.premiumExpiresAt);
+                    const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                    return daysLeft >= 140 ? (
+                      <div className="bg-green-100 border border-green-300 rounded p-2 text-center">
+                        <p className="text-xs font-semibold text-green-700">20% Discount Applied!</p>
+                        <p className="text-sm font-bold text-green-600">{Math.floor(plan.price * 0.8).toLocaleString()} EC</p>
+                      </div>
+                    ) : null;
+                  })()}
+                  {(userProfile.data?.energyCoreBalance || 0) < plan.price && !userProfile.data?.isPremium && (
                     <p className="text-xs text-red-600 text-center">
                       You need {(plan.price - (userProfile.data?.energyCoreBalance || 0)).toLocaleString()} more EC
                     </p>

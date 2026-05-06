@@ -34,9 +34,9 @@
 - [ ] Premium benefits display
 - [ ] Admin premium price management
 - [ ] Premium user benefits (2x rewards on leaderboard, special achievements)
-- [ ] Premium user bonus leaderboard points (+5 bonus per win, total 7 points)
+- [x] Premium user bonus leaderboard points (+2 bonus per win, total 4 points)
 - [ ] Premium user dashboard with reward code section
-- [ ] Premium-only reward code eligibility check
+- [x] Premium-only reward code eligibility check
 - [ ] Premium user UI for viewing earned reward codes
 
 ## Leaderboard & Rewards
@@ -46,8 +46,8 @@
 - [ ] Admin reward management (edit reward amounts)
 - [ ] Premium user reward multiplier (2x for top 3)
 - [ ] Weekly leaderboard reset (every 7 days)
-- [ ] Reward code generation for top 3 players (PREMIUM ONLY)
-- [ ] Premium user check before code generation
+- [x] Reward code generation for top 3 players (PREMIUM ONLY)
+- [x] Premium user check before code generation
 - [ ] Unique reward code per player (sent to their account)
 - [ ] Admin panel showing all top 3 reward codes
 - [ ] Reward code validation and redemption

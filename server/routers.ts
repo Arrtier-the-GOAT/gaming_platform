@@ -509,9 +509,14 @@ export const appRouter = router({
             })
             .where(eq(premiumSubscriptions.durationMonths, input.durationMonths));
         } else {
+          // Create a default premium subscription (for admin to use)
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30);
           await db.insert(premiumSubscriptions).values({
+            userId: 0, // Placeholder for admin-created subscriptions
             durationMonths: input.durationMonths,
             priceMMK: input.priceMMK,
+            expiresAt,
           });
         }
 
@@ -825,7 +830,7 @@ export const appRouter = router({
             )).limit(1);
 
           if (premiumSub.length > 0) {
-            leaderboardPointsReward += 5; // Premium bonus: +5 points (total 7)
+            leaderboardPointsReward += 2; // Premium bonus: +2 points (total 4)
           }
         }
 

@@ -247,25 +247,25 @@ export default function Games() {
         </div>
 
         {/* Games Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {filteredGames.map(game => (
             <Card key={game.id} className="hover:shadow-lg transition-all hover:scale-105 cursor-pointer group">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="text-4xl">{game.icon}</div>
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
+              <CardHeader className="pb-2 md:pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-3xl md:text-4xl flex-shrink-0">{game.icon}</div>
+                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold whitespace-nowrap">
                     {game.reward}
                   </span>
                 </div>
-                <CardTitle className="text-lg mt-2">{game.name}</CardTitle>
+                <CardTitle className="text-sm md:text-lg mt-2 line-clamp-2">{game.name}</CardTitle>
                 <CardDescription className="text-xs">{game.category}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">{game.description}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">{game.description}</p>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Users className="w-3 h-3" />
-                    <span>{game.players} players</span>
+                    <span>{game.players}</span>
                   </div>
                 </div>
                 <Button 
@@ -276,10 +276,10 @@ export default function Games() {
                       .replace(/[^a-z0-9-]/g, '');
                     window.location.href = `/play/${gameRoute}`;
                   }}
-                  className="w-full group-hover:bg-primary group-hover:text-white transition"
+                  className="w-full group-hover:bg-primary group-hover:text-white transition text-xs md:text-sm h-9 md:h-10"
                   variant="outline"
                 >
-                  <Gamepad2 className="w-4 h-4 mr-2" />
+                  <Gamepad2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
                   Play Now
                 </Button>
               </CardContent>
@@ -297,7 +297,7 @@ export default function Games() {
         )}
 
         {/* Game Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-8 md:mt-12">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Games</CardTitle>

@@ -76,26 +76,26 @@ export default function Shop() {
   const selectedItemData = shopItems.data?.find(i => i.id === selectedItem);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-8">
-      <div className="container mx-auto px-4 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-6 md:py-8">
+      <div className="container mx-auto px-3 md:px-4 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Shop</h1>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <h1 className="text-2xl md:text-4xl font-bold mb-2">Shop</h1>
+            <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-2">
               <Package className="w-4 h-4" />
               Browse and purchase game currency
             </p>
           </div>
-          <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 px-6 py-3 rounded-lg border border-blue-200 dark:border-blue-700 w-full md:w-auto justify-center md:justify-end">
-            <Zap className="w-6 h-6 text-yellow-500" />
-            <span className="font-bold text-2xl text-blue-600 dark:text-blue-300">{userProfile.data?.energyCoreBalance || 0}</span>
-            <span className="text-sm text-muted-foreground">EC</span>
+          <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 px-4 md:px-6 py-2 md:py-3 rounded-lg border border-blue-200 dark:border-blue-700 w-full md:w-auto justify-center md:justify-end">
+            <Zap className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
+            <span className="font-bold text-xl md:text-2xl text-blue-600 dark:text-blue-300">{userProfile.data?.energyCoreBalance || 0}</span>
+            <span className="text-xs md:text-sm text-muted-foreground">EC</span>
           </div>
         </div>
 
         {/* Game Filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
           <Button
             variant={selectedGame === null ? "default" : "outline"}
             onClick={() => setSelectedGame(null)}
@@ -116,7 +116,7 @@ export default function Shop() {
         </div>
 
         {/* Shop Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
           {filteredItems?.map((item) => (
             <Card
               key={item.id}
@@ -125,21 +125,21 @@ export default function Shop() {
               }`}
               onClick={() => setSelectedItem(item.id)}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+              <CardHeader className="pb-2 md:pb-3">
+                <div className="flex items-start justify-between gap-2">
                   <div>
-                    <CardTitle className="text-lg">{item.name}</CardTitle>
+                    <CardTitle className="text-sm md:text-lg line-clamp-2">{item.name}</CardTitle>
                     <CardDescription className="text-xs mt-1">{item.game}</CardDescription>
                   </div>
-                  <ShoppingCart className="w-5 h-5 text-blue-500" />
+                  <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-blue-500 flex-shrink-0" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+                <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-xs text-muted-foreground">Price:</span>
-                  <p className="text-lg font-bold text-blue-600 flex items-center gap-1">
-                    <Zap className="w-4 h-4 text-yellow-500" />
+                  <p className="text-base md:text-lg font-bold text-blue-600 flex items-center gap-1">
+                    <Zap className="w-3 h-3 md:w-4 md:h-4 text-yellow-500" />
                     {item.energyCorePrice}
                   </p>
                 </div>

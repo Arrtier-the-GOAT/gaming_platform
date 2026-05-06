@@ -100,16 +100,16 @@ export default function Premium() {
   const isPremium = userProfile.data?.isPremium;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-background to-blue-50 py-12">
-      <div className="container mx-auto px-4 space-y-12">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-background to-blue-50 py-6 md:py-12">
+      <div className="container mx-auto px-3 md:px-4 space-y-6 md:space-y-12">
         {/* Header */}
-        <div className="text-center space-y-4 mb-12">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles className="w-8 h-8 text-purple-600" />
-            <h1 className="text-4xl font-bold">Premium Membership</h1>
-            <Sparkles className="w-8 h-8 text-purple-600" />
+        <div className="text-center space-y-3 md:space-y-4 mb-6 md:mb-12">
+          <div className="flex items-center justify-center gap-2 mb-3 md:mb-4">
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
+            <h1 className="text-2xl md:text-4xl font-bold">Premium Membership</h1>
+            <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Unlock exclusive features and boost your gaming experience with premium benefits
           </p>
           {isPremium && (
@@ -120,62 +120,62 @@ export default function Premium() {
         </div>
 
         {/* Benefits Overview */}
-        <div className="grid md:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-12">
           <Card className="border-purple-200 bg-purple-50">
-            <CardHeader className="pb-3">
-              <Zap className="w-6 h-6 text-yellow-500 mb-2" />
-              <CardTitle className="text-lg">2-3x Points</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <Zap className="w-5 h-5 md:w-6 md:h-6 text-yellow-500 mb-2" />
+              <CardTitle className="text-sm md:text-lg">2-3x Points</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Earn more leaderboard points per game</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Earn more leaderboard points per game</p>
             </CardContent>
           </Card>
 
           <Card className="border-blue-200 bg-blue-50">
-            <CardHeader className="pb-3">
-              <Gift className="w-6 h-6 text-blue-500 mb-2" />
-              <CardTitle className="text-lg">Exclusive Rewards</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <Gift className="w-5 h-5 md:w-6 md:h-6 text-blue-500 mb-2" />
+              <CardTitle className="text-sm md:text-lg">Exclusive Rewards</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Access premium-only rewards and items</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Access premium-only rewards and items</p>
             </CardContent>
           </Card>
 
           <Card className="border-green-200 bg-green-50">
-            <CardHeader className="pb-3">
-              <Trophy className="w-6 h-6 text-green-500 mb-2" />
-              <CardTitle className="text-lg">VIP Status</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-green-500 mb-2" />
+              <CardTitle className="text-sm md:text-lg">VIP Status</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Get VIP badge and special recognition</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Get VIP badge and special recognition</p>
             </CardContent>
           </Card>
 
           <Card className="border-pink-200 bg-pink-50">
-            <CardHeader className="pb-3">
-              <Users className="w-6 h-6 text-pink-500 mb-2" />
-              <CardTitle className="text-lg">Priority Support</CardTitle>
+            <CardHeader className="pb-2 md:pb-3">
+              <Users className="w-5 h-5 md:w-6 md:h-6 text-pink-500 mb-2" />
+              <CardTitle className="text-sm md:text-lg">Priority Support</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Get faster support and assistance</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Get faster support and assistance</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Your Balance */}
-        <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-6 text-center">
-          <p className="text-muted-foreground mb-2">Your Energy Core Balance</p>
-          <p className="text-4xl font-bold text-purple-600 flex items-center justify-center gap-2">
-            <Zap className="w-8 h-8 text-yellow-500" />
+        <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-4 md:p-6 text-center">
+          <p className="text-xs md:text-sm text-muted-foreground mb-2">Your Energy Core Balance</p>
+          <p className="text-2xl md:text-4xl font-bold text-purple-600 flex items-center justify-center gap-2">
+            <Zap className="w-6 h-6 md:w-8 md:h-8 text-yellow-500" />
             {userProfile.data?.energyCoreBalance || 0} EC
           </p>
         </div>
 
         {/* Premium Plans */}
-        <div className="space-y-6">
-          <h2 className="text-3xl font-bold text-center">Choose Your Plan</h2>
+        <div className="space-y-4 md:space-y-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-center">Choose Your Plan</h2>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {PREMIUM_PLANS.map((plan) => (
               <Card
                 key={plan.id}

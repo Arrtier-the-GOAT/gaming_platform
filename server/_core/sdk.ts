@@ -279,6 +279,7 @@ class SDKServer {
           name: userInfo.name || null,
           email: userInfo.email ?? null,
           loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          referralCode: '', // Will be auto-generated in upsertUser
           lastSignedIn: signedInAt,
         });
         user = await db.getUserByOpenId(userInfo.openId);
@@ -294,6 +295,7 @@ class SDKServer {
 
     await db.upsertUser({
       openId: user.openId,
+      referralCode: user.referralCode,
       lastSignedIn: signedInAt,
     });
 

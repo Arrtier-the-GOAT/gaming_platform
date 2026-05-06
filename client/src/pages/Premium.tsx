@@ -250,7 +250,7 @@ export default function Premium() {
                   {/* Purchase Button */}
                   <Button
                     onClick={() => handlePurchase(plan.id)}
-                    disabled={(userProfile.data?.mykBalance || 0) < plan.price && !userProfile.data?.isPremium}
+                    disabled={userProfile.data?.isPremium}
                     className={`w-full ${
                       plan.popular
                         ? "bg-purple-600 hover:bg-purple-700"
@@ -259,11 +259,6 @@ export default function Premium() {
                   >
                     Upgrade Now
                   </Button>
-                  {(userProfile.data?.mykBalance || 0) < plan.price && !userProfile.data?.isPremium && (
-                    <p className="text-xs text-red-600 text-center">
-                      You need {(plan.price - (userProfile.data?.mykBalance || 0)).toLocaleString()} more MMK
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             ))}

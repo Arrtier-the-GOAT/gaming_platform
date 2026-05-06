@@ -37,7 +37,7 @@ const PREMIUM_PLANS = [
       "Exclusive rewards",
       "Priority support",
       "Ad-free experience",
-      "Bonus 500 EC",
+      "Bonus rewards",
       "Early access to new games",
     ],
     popular: false,
@@ -53,7 +53,7 @@ const PREMIUM_PLANS = [
       "VIP status",
       "All exclusive rewards",
       "24/7 priority support",
-      "Bonus 3000 EC",
+      "Bonus rewards",
       "Early access to new games",
       "Monthly bonus rewards",
       "Custom profile badge",
@@ -191,10 +191,10 @@ export default function Premium() {
 
         {/* Your Balance */}
         <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-4 md:p-6 text-center">
-          <p className="text-xs md:text-sm text-muted-foreground mb-2">Your Energy Core Balance</p>
+          <p className="text-xs md:text-sm text-muted-foreground mb-2">Your Account Balance</p>
           <p className="text-2xl md:text-4xl font-bold text-purple-600 flex items-center justify-center gap-2">
             <Zap className="w-6 h-6 md:w-8 md:h-8 text-yellow-500" />
-            {userProfile.data?.energyCoreBalance || 0} EC
+            {(userProfile.data?.energyCoreBalance || 0).toLocaleString()} MMK
           </p>
         </div>
 
@@ -229,10 +229,10 @@ export default function Premium() {
                   <div className="space-y-1">
                     <div className="flex items-baseline gap-2">
                       <span className="text-4xl font-bold text-purple-600">{plan.price.toLocaleString()}</span>
-                      <span className="text-muted-foreground">EC</span>
+                      <span className="text-muted-foreground">MMK</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      ~{plan.pricePerDay.toLocaleString()} EC per day
+                      ~{plan.pricePerDay.toLocaleString()} MMK per day
                     </p>
                   </div>
 
@@ -272,7 +272,7 @@ export default function Premium() {
                   })()}
                   {(userProfile.data?.energyCoreBalance || 0) < plan.price && !userProfile.data?.isPremium && (
                     <p className="text-xs text-red-600 text-center">
-                      You need {(plan.price - (userProfile.data?.energyCoreBalance || 0)).toLocaleString()} more EC
+                      You need {(plan.price - (userProfile.data?.energyCoreBalance || 0)).toLocaleString()} more MMK
                     </p>
                   )}
                 </CardContent>
@@ -332,7 +332,7 @@ export default function Premium() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Amount</p>
-                    <p className="text-2xl font-bold text-purple-600">{selectedPlanForPayment.price.toLocaleString()} EC</p>
+                    <p className="text-2xl font-bold text-purple-600">{selectedPlanForPayment.price.toLocaleString()} MMK</p>
                   </div>
                 </div>
 

@@ -3,12 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { Gamepad2, Trophy, Zap, Users, Gift, Sparkles, Menu, X } from "lucide-react";
+import { Gamepad2, Trophy, Zap, Users, Gift, Sparkles, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 
 export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const logoutMutation = trpc.auth.logout.useMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -63,6 +74,15 @@ export default function Home() {
                     </Button>
                   </Link>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
               </>
             ) : (
               <Button
@@ -128,11 +148,13 @@ export default function Home() {
                 )}
                 <Button
                   variant="outline"
-                  className="w-full mt-2 h-10 text-base"
+                  className="w-full mt-2 h-10 text-base text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={() => {
                     setMobileMenuOpen(false);
+                    handleLogout();
                   }}
                 >
+                  <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </Button>
               </>

@@ -14,7 +14,7 @@ import Premium from "./pages/Premium";
 import Events from "./pages/Events";
 import DailyTasks from "./pages/DailyTasks";
 import Achievements from "./pages/Achievements";
-import GameLobby from "./pages/GameLobby";
+import Games from "./pages/Games";
 import AdminDashboard from "./pages/AdminDashboard";
 import GameTutorials from "./pages/GameTutorials";
 import Social from "./pages/Social";
@@ -38,7 +38,7 @@ function Router() {
       <Route path={"/events"} component={Events} />
       <Route path={"/daily-tasks"} component={DailyTasks} />
       <Route path={"/achievements"} component={Achievements} />
-      <Route path={"/games"} component={GameLobby} />
+      <Route path={"/games"} component={Games} />
       
       {/* Admin routes */}
       <Route path={"/admin"} component={AdminDashboard} />

@@ -1039,6 +1039,118 @@ export const appRouter = router({
       return codes;
     }),
   }),
-});
 
+  // Payment system
+  payment: router({
+    initiatePayment: protectedProcedure
+      .input(z.object({
+        amount: z.number().positive(),
+        method: z.enum(['kbz', 'aya', 'uab']),
+        shopItemId: z.number().optional(),
+        gameId: z.string().optional(),
+        inGameName: z.string().optional(),
+        serverId: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Create payment transaction
+        const result = await db.insert(paymentTransactions).values({
+          userId: ctx.user.id,
+          amount: input.amount,
+          method: input.method,
+          status: 'pending',
+          shopItemId: input.shopItemId,
+          gameId: input.gameId,
+          inGameName: input.inGameName,
+          serverId: input.serverId,
+          createdAt: new Date(),
+        });
+
+        // Generate payment reference
+        const paymentRef = `PAY-${ctx.user.id}-${Date.now()}`;
+
+        // Return payment details based on method
+        const paymentDetails = {
+          kbz: {
+            method: 'KBZ Pay',
+            phoneNumber: '09787398133',
+            name: 'Aung Han Thin',
+            amount: input.amount,
+            reference: paymentRef,
+          },
+          aya: {
+            method: 'AYA Pay',
+            phoneNumber: '09787398133',
+            name: 'Aung Han Thin',
+            amount: input.amount,
+            reference: paymentRef,
+          },
+          uab: {
+            method: 'UAB Pay',
+            phoneNumber: '09787398133',
+            name: 'Aung Han Thin',
+            amount: input.amount,
+            reference: paymentRef,
+          },
+        };
+
+        return {
+          success: true,
+          paymentId: result.insertId,
+          paymentRef,
+          ...paymentDetails[input.method],
+        };
+      }),
+
+    confirmPayment: protectedProcedure
+      .input(z.object({
+        paymentId: z.number(),
+        transactionId: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+        // Update payment status
+        await db.update(paymentTransactions)
+          .set({
+            status: 'completed',
+            transactionId: input.transactionId,
+            updatedAt: new Date(),
+          })
+          .where(eq(paymentTransactions.id, input.paymentId));
+
+        // Get payment details
+        const payment = await db.select().from(paymentTransactions)
+          .where(eq(paymentTransactions.id, input.paymentId)).limit(1);
+
+        if (payment[0] && payment[0].shopItemId) {
+          // Add shop purchase
+          await db.insert(shopPurchases).values({
+            userId: ctx.user.id,
+            shopItemId: payment[0].shopItemId,
+            gameId: payment[0].gameId,
+            inGameName: payment[0].inGameName,
+            serverId: payment[0].serverId,
+            amount: payment[0].amount,
+            status: 'completed',
+            createdAt: new Date(),
+          });
+        }
+
+        return { success: true };
+      }),
+
+    getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+
+      return await db.select().from(paymentTransactions)
+        .where(eq(paymentTransactions.userId, ctx.user.id))
+        .orderBy(desc(paymentTransactions.createdAt));
+    }),
+  }),
+});
 export type AppRouter = typeof appRouter;

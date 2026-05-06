@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { Gamepad2, Zap, Users } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import React from "react";
 
 const GAMES = [
   {
@@ -192,7 +192,7 @@ const CATEGORIES = ["All", "Card", "Board", "Puzzle", "Word", "Quiz", "Action", 
 
 export default function Games() {
   const { user, isAuthenticated } = useAuth();
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const filteredGames = selectedCategory === "All" 
     ? GAMES 

@@ -1,10 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Sparkles, Check, Zap, Gift, Trophy, Users } from "lucide-react";
 import { useState } from "react";
+
+const PAYMENT_DETAILS = {
+  phoneNumber: "09787398133",
+  name: "Aung Han Thin",
+};
 
 const PREMIUM_PLANS = [
   {
@@ -60,6 +65,8 @@ const PREMIUM_PLANS = [
 export default function Premium() {
   const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<typeof PREMIUM_PLANS[0] | null>(null);
   const userProfile = trpc.user.getProfile.useQuery();
   const purchasePremium = trpc.premium.purchasePremium.useMutation();
 
@@ -77,18 +84,26 @@ export default function Premium() {
       return;
     }
 
-    const plan = PREMIUM_PLANS.find(p => p.id === planId);
-    if (!plan) return;
+    // Show payment modal
+    setSelectedPlanForPayment(selectedPlanData);
+    setShowPaymentModal(true);
+  };
 
+  const handleConfirmPayment = () => {
+    if (!selectedPlanForPayment) return;
+
+    const planId = selectedPlanForPayment.id;
     const durationMonths = planId === 1 ? 1 : planId === 2 ? 3 : 12;
 
     purchasePremium.mutate(
       { durationMonths, paymentMethod: "kbz_pay" },
       {
         onSuccess: () => {
-          toast.success(`Premium activated for ${selectedPlanData.duration}!`);
+          toast.success(`Premium activated for ${selectedPlanForPayment.duration}!`);
           userProfile.refetch();
           setSelectedPlan(null);
+          setShowPaymentModal(false);
+          setSelectedPlanForPayment(null);
         },
         onError: (error: any) => {
           toast.error(error.message || "Purchase failed");
@@ -197,7 +212,6 @@ export default function Premium() {
                   <CardTitle className="text-2xl">{plan.duration}</CardTitle>
                   <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
-
                 <CardContent className="space-y-6">
                   {/* Price */}
                   <div className="space-y-1">
@@ -223,14 +237,14 @@ export default function Premium() {
                   {/* Purchase Button */}
                   <Button
                     onClick={() => handlePurchase(plan.id)}
-                    disabled={purchasePremium.isPending || (userProfile.data?.energyCoreBalance || 0) < plan.price || isPremium}
+                    disabled={(userProfile.data?.energyCoreBalance || 0) < plan.price || isPremium}
                     className={`w-full h-11 text-base font-semibold ${
                       plan.popular
                         ? "bg-purple-600 hover:bg-purple-700 text-white"
                         : "bg-gray-200 hover:bg-gray-300"
                     }`}
                   >
-                    {purchasePremium.isPending ? "Processing..." : "Upgrade Now"}
+                    {"Upgrade Now"}
                   </Button>
 
                   {(userProfile.data?.energyCoreBalance || 0) < plan.price && (
@@ -278,6 +292,91 @@ export default function Premium() {
             </div>
           </div>
         </div>
+
+        {/* Payment Modal */}
+        {showPaymentModal && selectedPlanForPayment && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="p-6 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Payment Details</h2>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Plan</p>
+                    <p className="text-lg font-semibold">{selectedPlanForPayment.duration}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Amount</p>
+                    <p className="text-2xl font-bold text-purple-600">{selectedPlanForPayment.price.toLocaleString()} EC</p>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+                  <h3 className="font-semibold text-purple-900">Send Payment To:</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Name</p>
+                      <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
+                        <p className="font-medium">{PAYMENT_DETAILS.name}</p>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(PAYMENT_DETAILS.name);
+                            toast.success("Name copied!");
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Phone Number</p>
+                      <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
+                        <p className="font-medium">{PAYMENT_DETAILS.phoneNumber}</p>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(PAYMENT_DETAILS.phoneNumber);
+                            toast.success("Phone number copied!");
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-xs text-yellow-800">
+                    📝 After payment, your premium will be activated automatically. Please allow up to 5 minutes for processing.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      setSelectedPlanForPayment(null);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmPayment}
+                    disabled={purchasePremium.isPending}
+                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50"
+                  >
+                    {purchasePremium.isPending ? "Processing..." : "I've Sent Payment"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

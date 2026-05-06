@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Gamepad2, Zap, Users } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import React from "react";
 
 const GAMES = [
   {
@@ -268,6 +269,13 @@ export default function Games() {
                   </div>
                 </div>
                 <Button 
+                  onClick={() => {
+                    const gameRoute = game.name
+                      .toLowerCase()
+                      .replace(/\s+/g, '-')
+                      .replace(/[^a-z0-9-]/g, '');
+                    window.location.href = `/play/${gameRoute}`;
+                  }}
                   className="w-full group-hover:bg-primary group-hover:text-white transition"
                   variant="outline"
                 >
@@ -324,5 +332,3 @@ export default function Games() {
     </div>
   );
 }
-
-import React from "react";

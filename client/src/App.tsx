@@ -43,6 +43,7 @@ import Trivia from "./pages/games/Trivia";
 import Hangman from "./pages/games/Hangman";
 import Wordle from "./pages/games/Wordle";
 import Checkers from "./pages/games/Checkers";
+import { PWAPrompt } from "./components/PWAPrompt";
 
 function Router() {
   return (
@@ -102,6 +103,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          <PWAPrompt />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

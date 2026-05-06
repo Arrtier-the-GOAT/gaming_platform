@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb, getUserByOpenId, getUserByReferralCode } from "./db";
+import { ENV } from "./_core/env";
 import { 
   users, 
   referrals, 
@@ -933,6 +934,38 @@ export const appRouter = router({
     }),
   }),
 
+  // Setup and owner-only operations
+  setup: router({
+    promoteToAdmin: protectedProcedure
+      .input(z.object({
+        email: z.string().email(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Only allow owner to promote admins
+        if (ctx.user.openId !== ENV.ownerOpenId) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only owner can promote admins" });
+        }
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Find user by email
+        const targetUser = await db.select().from(users)
+          .where(eq(users.email, input.email)).limit(1);
+
+        if (!targetUser[0]) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+        }
+
+        // Promote to admin
+        await db.update(users)
+          .set({ role: "admin" })
+          .where(eq(users.id, targetUser[0].id));
+
+        return { success: true, userId: targetUser[0].id, email: targetUser[0].email };
+      }),
+  }),
+
   // Admin dashboard
   admin: router({
     getDashboard: adminProcedure.query(async () => {
@@ -1067,6 +1100,53 @@ export const appRouter = router({
 
       return codes;
     }),
+  }),
+
+  // Notifications
+  notification: router({
+    sendAchievementNotification: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        message: z.string(),
+        achievementName: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // In a real app, you would send this to a push notification service
+        // For now, we just log it and return success
+        console.log(`[Notification] Achievement for user ${ctx.user.id}:`, input);
+        return { success: true, notificationId: Date.now() };
+      }),
+
+    sendGameRewardNotification: protectedProcedure
+      .input(z.object({
+        gameName: z.string(),
+        rewardAmount: z.number(),
+        message: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        console.log(`[Notification] Game reward for user ${ctx.user.id}:`, input);
+        return { success: true, notificationId: Date.now() };
+      }),
+
+    sendPremiumNotification: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        message: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        console.log(`[Notification] Premium notification for user ${ctx.user.id}:`, input);
+        return { success: true, notificationId: Date.now() };
+      }),
+
+    sendLeaderboardNotification: protectedProcedure
+      .input(z.object({
+        position: z.number(),
+        message: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        console.log(`[Notification] Leaderboard notification for user ${ctx.user.id}:`, input);
+        return { success: true, notificationId: Date.now() };
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

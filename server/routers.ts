@@ -26,7 +26,7 @@ import {
   rewardCodes,
   weeklyLeaderboardSnapshots
 } from "../drizzle/schema";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { eq, desc, and, gte, sql } from "drizzle-orm";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -944,6 +944,22 @@ export const appRouter = router({
 
         return { success: true, userId: targetUser[0].id, email: targetUser[0].email };
       }),
+
+    // Fix database schema
+    fixSchema: publicProcedure.mutation(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      try {
+        // Add mykBalance column if it doesn't exist
+        await db.execute(sql`ALTER TABLE users ADD COLUMN mykBalance INT DEFAULT 0 NOT NULL`);
+        console.log("✅ mykBalance column added");
+      } catch (e: any) {
+        console.log("ℹ️ Column might already exist or error:", e.message);
+      }
+
+      return { success: true, message: "Schema fix attempted" };
+    }),
   }),
 
   // Admin dashboard

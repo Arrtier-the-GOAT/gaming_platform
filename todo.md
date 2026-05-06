@@ -533,3 +533,21 @@
 - [x] Admin reviews in Pending Requests tab
 - [x] Admin approves/rejects request
 - [x] Premium activates on approval
+
+
+## Session 15 - Fix OAuth Callback Error - COMPLETED
+
+### Database Schema Issue - COMPLETED
+- [x] Diagnosed mykBalance field migration issue
+- [x] Found mykBalance field missing from database
+- [x] Created fixSchema tRPC endpoint in setup router
+- [x] Applied database migration via fixSchema mutation
+- [x] Verified schema matches Drizzle definition
+
+### OAuth Login Fix - COMPLETED
+- [x] Tested OAuth login after schema fix
+- [x] Verified user creation works
+- [x] Confirmed mykBalance initializes correctly
+- [x] User logged in successfully (trr4bzvaaw)
+- [x] Admin access verified
+- [x] All pages loading correctly

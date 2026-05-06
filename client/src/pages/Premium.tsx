@@ -117,6 +117,7 @@ export default function Premium() {
       await purchasePremium.mutateAsync({
         durationMonths: selectedPlanForPayment.id === 1 ? 1 : selectedPlanForPayment.id === 2 ? 3 : 5,
         paymentMethod: "kbz_pay",
+        transactionId: transactionId,
       });
       
       toast.success("Premium activated successfully!");

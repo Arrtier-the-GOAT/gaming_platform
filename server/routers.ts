@@ -460,6 +460,7 @@ export const appRouter = router({
       .input(z.object({
         durationMonths: z.number(),
         paymentMethod: z.enum(["kbz_pay", "aya_pay", "uab_pay"]),
+        transactionId: z.string().regex(/^\d{5}$/, "Transaction ID must be exactly 5 digits"),
       }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -472,19 +473,47 @@ export const appRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
         }
 
-        // Create payment transaction
+        // Validate transaction ID format (5 digits)
+        if (!/^\d{5}$/.test(input.transactionId)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid transaction ID format" });
+        }
+
+        // Create payment transaction with verification ID
         await db.insert(paymentTransactions).values({
           userId: ctx.user.id,
           amount: plan[0].priceMMK,
           type: "premium",
           paymentMethod: input.paymentMethod,
-          status: "pending",
+          status: "completed",
+          transactionId: input.transactionId,
         });
+
+        // Activate premium subscription
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + input.durationMonths);
+
+        await db.insert(premiumSubscriptions).values({
+          userId: ctx.user.id,
+          durationMonths: input.durationMonths,
+          priceMMK: plan[0].priceMMK,
+          expiresAt,
+        });
+
+        // Deduct from user's energy core balance
+        const currentUser = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+        const newBalance = (currentUser[0]?.energyCoreBalance || 0) - plan[0].priceMMK;
+        
+        await db.update(users)
+          .set({
+            energyCoreBalance: newBalance,
+          })
+          .where(eq(users.id, ctx.user.id));
 
         return {
           success: true,
-          transactionId: 0,
+          transactionId: input.transactionId,
           amount: plan[0].priceMMK,
+          expiresAt,
         };
       }),
 

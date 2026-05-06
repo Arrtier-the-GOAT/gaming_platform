@@ -25,7 +25,6 @@ import AdminRewards from "./pages/AdminRewards";
 import AdminAchievements from "./pages/AdminAchievements";
 import AdminEvents from "./pages/AdminEvents";
 import ChessGame from "./pages/games/Chess";
-import UNOGame from "./pages/games/UNO";
 import TicTacToe from "./pages/games/TicTacToe";
 import Connect4 from "./pages/games/Connect4";
 import Sudoku from "./pages/games/Sudoku";
@@ -62,7 +61,6 @@ function Router() {
       
       {/* Game routes */}
       <Route path={"/play/chess"} component={ChessGame} />
-      <Route path={"/play/uno-multiplayer"} component={UNOGame} />
       <Route path={"/play/tic-tac-toe"} component={TicTacToe} />
       <Route path={"/play/connect-4"} component={Connect4} />
       <Route path={"/play/sudoku"} component={Sudoku} />

@@ -7,15 +7,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 
 const GAMES = [
   {
-    id: 1,
-    name: "UNO Multiplayer",
-    description: "Classic card game for 2-4 players",
-    players: "2-4",
-    reward: "5 EC",
-    icon: "🃏",
-    category: "Card",
-  },
-  {
     id: 2,
     name: "Chess",
     description: "Strategic board game against AI or players",

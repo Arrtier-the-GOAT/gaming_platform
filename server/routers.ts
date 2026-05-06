@@ -814,7 +814,20 @@ export const appRouter = router({
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
         const energyCoreReward = input.won ? 5 : -2; // Win: +5, Loss: -2
-        const leaderboardPointsReward = input.won ? 2 : 0;
+        let leaderboardPointsReward = input.won ? 2 : 0;
+
+        // Check if user is premium and add bonus points
+        if (input.won) {
+          const premiumSub = await db.select().from(premiumSubscriptions)
+            .where(and(
+              eq(premiumSubscriptions.userId, ctx.user.id),
+              gte(premiumSubscriptions.expiresAt, new Date())
+            )).limit(1);
+
+          if (premiumSub.length > 0) {
+            leaderboardPointsReward += 5; // Premium bonus: +5 points (total 7)
+          }
+        }
 
         // Record game result
         await db.insert(gameResults).values({
@@ -847,22 +860,23 @@ export const appRouter = router({
           .where(eq(leaderboardPoints.userId, ctx.user.id)).limit(1);
 
         if (leaderboard[0]) {
+          const newTotalPoints = leaderboard[0].totalPoints + leaderboardPointsReward;
           await db.update(leaderboardPoints)
             .set({
-              totalPoints: leaderboard[0].totalPoints + leaderboardPointsReward,
+              totalPoints: newTotalPoints,
               gamesWon: input.won ? leaderboard[0].gamesWon + 1 : leaderboard[0].gamesWon,
               lastUpdated: new Date(),
             })
             .where(eq(leaderboardPoints.userId, ctx.user.id));
-        } else {
+        } else if (input.won) {
           await db.insert(leaderboardPoints).values({
             userId: ctx.user.id,
             totalPoints: leaderboardPointsReward,
-            gamesWon: input.won ? 1 : 0,
+            gamesWon: 1,
           });
         }
 
-        return { success: true, resultId: 0 };
+        return { success: true, resultId: 0, leaderboardPoints: leaderboardPointsReward };
       }),
 
     getStats: protectedProcedure.query(async ({ ctx }) => {

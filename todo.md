@@ -34,6 +34,10 @@
 - [ ] Premium benefits display
 - [ ] Admin premium price management
 - [ ] Premium user benefits (2x rewards on leaderboard, special achievements)
+- [ ] Premium user bonus leaderboard points (+5 bonus per win, total 7 points)
+- [ ] Premium user dashboard with reward code section
+- [ ] Premium-only reward code eligibility check
+- [ ] Premium user UI for viewing earned reward codes
 
 ## Leaderboard & Rewards
 - [ ] Leaderboard page showing top players
@@ -42,7 +46,8 @@
 - [ ] Admin reward management (edit reward amounts)
 - [ ] Premium user reward multiplier (2x for top 3)
 - [ ] Weekly leaderboard reset (every 7 days)
-- [ ] Reward code generation for top 3 players
+- [ ] Reward code generation for top 3 players (PREMIUM ONLY)
+- [ ] Premium user check before code generation
 - [ ] Unique reward code per player (sent to their account)
 - [ ] Admin panel showing all top 3 reward codes
 - [ ] Reward code validation and redemption
@@ -63,25 +68,25 @@
 
 ## Games (20 total)
 - [x] UNO multiplayer (4 players)
-- [ ] Chess
-- [ ] Checkers
-- [ ] Tic Tac Toe
-- [ ] Connect 4
-- [ ] Sudoku
-- [ ] 2048
-- [ ] Memory/Matching Game
-- [ ] Word Search
-- [ ] Crossword
-- [ ] Trivia Quiz
-- [ ] Hangman
-- [ ] Wordle Clone
-- [ ] Snake Game
-- [ ] Flappy Bird Clone
-- [ ] Breakout/Brick Breaker
-- [ ] Pac-Man Clone
-- [ ] Minesweeper
-- [ ] Puzzle Slider
-- [ ] Card Memory Matching
+- [x] Chess
+- [x] Checkers
+- [x] Tic Tac Toe
+- [x] Connect 4
+- [x] Sudoku
+- [x] 2048
+- [x] Memory/Matching Game
+- [x] Word Search
+- [x] Crossword
+- [x] Trivia Quiz
+- [x] Hangman
+- [x] Wordle Clone
+- [x] Snake Game
+- [x] Flappy Bird Clone
+- [x] Breakout/Brick Breaker
+- [x] Pac-Man Clone
+- [x] Minesweeper
+- [x] Puzzle Slider
+- [x] Card Memory Matching
 - [ ] Game 2: (TBD)
 - [ ] Game 3: (TBD)
 - [ ] Game 4: (TBD)

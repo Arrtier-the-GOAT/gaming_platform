@@ -15,6 +15,13 @@
       "when": 1778061951748,
       "tag": "0001_nervous_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778063091930,
+      "tag": "0002_mute_gamora",
+      "breakpoints": true
     }
   ]
 }

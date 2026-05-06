@@ -26,7 +26,7 @@ export const users = mysqlTable("users", {
   // Gaming platform fields
   referralCode: varchar("referralCode", { length: 20 }).unique().notNull(),
   referredBy: varchar("referredBy", { length: 20 }), // referral code of the person who referred this user
-  energyCoreBalance: int("energyCoreBalance").default(100).notNull(),
+  mykBalance: int("mykBalance").default(0).notNull(), // Myanmar Kyat balance
   isPremium: boolean("isPremium").default(false).notNull(),
   premiumExpiresAt: timestamp("premiumExpiresAt"),
   

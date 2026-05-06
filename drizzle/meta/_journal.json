@@ -22,6 +22,13 @@
       "when": 1778063091930,
       "tag": "0002_mute_gamora",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1778073430122,
+      "tag": "0003_shallow_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

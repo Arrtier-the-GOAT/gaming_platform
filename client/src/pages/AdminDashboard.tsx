@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const adminStats = trpc.admin.getDashboard.useQuery();
   const users = trpc.admin.getUsers.useQuery();
   const gameStats = trpc.game.getStats.useQuery();
+  const pendingRequests = trpc.admin.getPendingPremiumRequests.useQuery();
+  const approveMutation = trpc.admin.approvePremiumRequest.useMutation();
+  const rejectMutation = trpc.admin.rejectPremiumRequest.useMutation();
 
   if (!user || user.role !== "admin") {
     return (
@@ -52,6 +55,7 @@ export default function AdminDashboard() {
         <div className="flex gap-2 border-b border-slate-700 overflow-x-auto pb-0">
           {[
             { id: "overview", label: "Overview", icon: BarChart3 },
+            { id: "pending-requests", label: "Pending Requests", icon: Zap },
             { id: "analytics", label: "Analytics", icon: TrendingUp },
             { id: "users", label: "Users", icon: Users },
             { id: "games", label: "Games", icon: Activity },
@@ -212,7 +216,7 @@ export default function AdminDashboard() {
                             {u.role}
                           </span>
                         </td>
-                        <td className="py-3 text-yellow-400 font-medium">{u.energyCoreBalance}</td>
+                        <td className="py-3 text-yellow-400 font-medium">{u.mykBalance}</td>
                         <td className="py-3">
                           <span className={`px-2 py-1 rounded text-xs ${
                             u.isPremium ? "bg-purple-900 text-purple-200" : "bg-slate-700 text-slate-400"
@@ -351,6 +355,87 @@ export default function AdminDashboard() {
               <Button className="w-full bg-blue-600 hover:bg-blue-700">Save Settings</Button>
             </CardContent>
           </Card>
+        )}
+
+        {/* Pending Requests Tab */}
+        {activeTab === "pending-requests" && (
+          <div className="space-y-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Pending Premium Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingRequests.isLoading ? (
+                  <p className="text-slate-400">Loading requests...</p>
+                ) : pendingRequests.data && pendingRequests.data.length > 0 ? (
+                  <div className="space-y-4">
+                    {pendingRequests.data.map((req) => (
+                      <div key={req.id} className="bg-slate-700 p-4 rounded-lg space-y-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div>
+                            <p className="text-xs text-slate-400">User</p>
+                            <p className="text-sm font-semibold text-white">{req.userName}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-400">Email</p>
+                            <p className="text-sm text-white">{req.userEmail}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-400">Amount</p>
+                            <p className="text-sm font-semibold text-green-400">{req.amount} MMK</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-400">Transaction ID</p>
+                            <p className="text-sm font-mono text-white">{req.transactionId}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => {
+                              approveMutation.mutate(
+                                { paymentTransactionId: req.id, durationMonths: 1 },
+                                {
+                                  onSuccess: () => {
+                                    toast.success("Premium request approved!");
+                                    pendingRequests.refetch();
+                                  },
+                                  onError: () => toast.error("Failed to approve"),
+                                }
+                              );
+                            }}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => {
+                              rejectMutation.mutate(
+                                { paymentTransactionId: req.id },
+                                {
+                                  onSuccess: () => {
+                                    toast.success("Premium request rejected!");
+                                    pendingRequests.refetch();
+                                  },
+                                  onError: () => toast.error("Failed to reject"),
+                                }
+                              );
+                            }}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-400">No pending requests</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>

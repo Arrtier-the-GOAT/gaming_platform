@@ -30,7 +30,7 @@ export default function Shop() {
       return;
     }
 
-    if ((userProfile.data?.energyCoreBalance || 0) < cost) {
+    if ((userProfile.data?.mykBalance || 0) < cost) {
       toast.error("Insufficient energy core balance");
       return;
     }
@@ -89,7 +89,7 @@ export default function Shop() {
           </div>
           <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 px-4 md:px-6 py-2 md:py-3 rounded-lg border border-blue-200 dark:border-blue-700 w-full md:w-auto justify-center md:justify-end">
             <Zap className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
-            <span className="font-bold text-xl md:text-2xl text-blue-600 dark:text-blue-300">{userProfile.data?.energyCoreBalance || 0}</span>
+            <span className="font-bold text-xl md:text-2xl text-blue-600 dark:text-blue-300">{userProfile.data?.mykBalance || 0}</span>
             <span className="text-xs md:text-sm text-muted-foreground">EC</span>
           </div>
         </div>
@@ -253,7 +253,7 @@ export default function Shop() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Your Balance</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-blue-600">{userProfile.data?.energyCoreBalance || 0}</p>
+              <p className="text-3xl font-bold text-blue-600">{userProfile.data?.mykBalance || 0}</p>
               <p className="text-xs text-muted-foreground mt-1">Energy Core</p>
             </CardContent>
           </Card>

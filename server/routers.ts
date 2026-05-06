@@ -93,7 +93,7 @@ export const appRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
-      return user[0]?.energyCoreBalance || 0;
+      return user[0]?.mykBalance || 0;
     }),
 
     getPremiumStatus: protectedProcedure.query(async ({ ctx }) => {
@@ -136,7 +136,7 @@ export const appRouter = router({
           if (existingReferral.length > 0) {
             // Award 200 energy core to referrer
             await db.update(users)
-              .set({ energyCoreBalance: referrer.energyCoreBalance + 200 })
+              .set({ mykBalance: referrer.mykBalance + 200 })
               .where(eq(users.id, referrer.id));
 
             // Record transaction
@@ -163,7 +163,7 @@ export const appRouter = router({
 
       // Get users with most successful referrals
       const result = await db.select().from(users)
-        .orderBy(desc(users.energyCoreBalance))
+        .orderBy(desc(users.mykBalance))
         .limit(10);
 
       return result;
@@ -177,7 +177,7 @@ export const appRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
-      return user[0]?.energyCoreBalance || 0;
+      return user[0]?.mykBalance || 0;
     }),
 
     getPackages: publicProcedure.query(async () => {
@@ -245,7 +245,7 @@ export const appRouter = router({
         const user = await db.select().from(users)
           .where(eq(users.id, ctx.user.id)).limit(1);
         
-        if (!user[0] || user[0].energyCoreBalance < item[0].energyCorePrice) {
+        if (!user[0] || user[0].mykBalance < item[0].energyCorePrice) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Insufficient energy core" });
         }
 
@@ -262,7 +262,7 @@ export const appRouter = router({
 
         // Deduct energy core
         await db.update(users)
-          .set({ energyCoreBalance: user[0].energyCoreBalance - item[0].energyCorePrice })
+          .set({ mykBalance: user[0].mykBalance - item[0].energyCorePrice })
           .where(eq(users.id, ctx.user.id));
 
         // Record transaction
@@ -479,42 +479,22 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid transaction ID format" });
         }
 
-        // Create payment transaction with verification ID
+        // Create payment transaction with PENDING status (waiting for admin approval)
         await db.insert(paymentTransactions).values({
           userId: ctx.user.id,
           amount: plan[0].priceMMK,
           type: "premium",
           paymentMethod: input.paymentMethod,
-          status: "completed",
+          status: "pending", // Waiting for admin approval
           transactionId: input.transactionId,
         });
-
-        // Activate premium subscription
-        const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + input.durationMonths);
-
-        await db.insert(premiumSubscriptions).values({
-          userId: ctx.user.id,
-          durationMonths: input.durationMonths,
-          priceMMK: plan[0].priceMMK,
-          expiresAt,
-        });
-
-        // Deduct from user's energy core balance
-        const currentUser = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
-        const newBalance = (currentUser[0]?.energyCoreBalance || 0) - plan[0].priceMMK;
-        
-        await db.update(users)
-          .set({
-            energyCoreBalance: newBalance,
-          })
-          .where(eq(users.id, ctx.user.id));
 
         return {
           success: true,
+          message: "Payment request submitted. Waiting for admin approval.",
           transactionId: input.transactionId,
           amount: plan[0].priceMMK,
-          expiresAt,
+          durationMonths: input.durationMonths,
         };
       }),
 
@@ -611,7 +591,7 @@ export const appRouter = router({
           .where(eq(users.id, ctx.user.id)).limit(1);
 
         await db.update(users)
-          .set({ energyCoreBalance: (user[0]?.energyCoreBalance || 0) + task[0].energyCoreReward })
+          .set({ mykBalance: (user[0]?.mykBalance || 0) + task[0].energyCoreReward })
           .where(eq(users.id, ctx.user.id));
 
         // Record transaction
@@ -690,7 +670,7 @@ export const appRouter = router({
           .where(eq(users.id, ctx.user.id)).limit(1);
 
         await db.update(users)
-          .set({ energyCoreBalance: (user[0]?.energyCoreBalance || 0) + achievement[0].energyCoreReward })
+          .set({ mykBalance: (user[0]?.mykBalance || 0) + achievement[0].energyCoreReward })
           .where(eq(users.id, ctx.user.id));
 
         // Record transaction
@@ -878,9 +858,9 @@ export const appRouter = router({
         const user = await db.select().from(users)
           .where(eq(users.id, ctx.user.id)).limit(1);
 
-        const newBalance = Math.max(0, (user[0]?.energyCoreBalance || 0) + energyCoreReward);
+        const newBalance = Math.max(0, (user[0]?.mykBalance || 0) + energyCoreReward);
         await db.update(users)
-          .set({ energyCoreBalance: newBalance })
+          .set({ mykBalance: newBalance })
           .where(eq(users.id, ctx.user.id));
 
         await db.insert(energyCoreTransactions).values({
@@ -1024,10 +1004,10 @@ export const appRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
         }
 
-        const newBalance = (user[0].energyCoreBalance || 0) + input.amount;
+        const newBalance = (user[0].mykBalance || 0) + input.amount;
 
         await db.update(users)
-          .set({ energyCoreBalance: newBalance })
+          .set({ mykBalance: newBalance })
           .where(eq(users.id, input.userId));
 
         await db.insert(energyCoreTransactions).values({
@@ -1038,6 +1018,92 @@ export const appRouter = router({
         });
 
         return { success: true, newBalance };
+      }),
+
+    // Get pending premium requests
+    getPendingPremiumRequests: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const pendingRequests = await db.select()
+        .from(paymentTransactions)
+        .where(eq(paymentTransactions.status, "pending"))
+        .orderBy(desc(paymentTransactions.createdAt));
+
+      const enriched = await Promise.all(
+        pendingRequests.map(async (req) => {
+          const user = await db.select().from(users)
+            .where(eq(users.id, req.userId)).limit(1);
+          return {
+            ...req,
+            userName: user[0]?.name || "Unknown",
+            userEmail: user[0]?.email || "Unknown",
+          };
+        })
+      );
+
+      return enriched;
+    }),
+
+    // Approve premium request
+    approvePremiumRequest: adminProcedure
+      .input(z.object({
+        paymentTransactionId: z.number(),
+        durationMonths: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const paymentTx = await db.select().from(paymentTransactions)
+          .where(eq(paymentTransactions.id, input.paymentTransactionId)).limit(1);
+
+        if (!paymentTx[0]) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Payment transaction not found" });
+        }
+
+        if (paymentTx[0].status !== "pending") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Request already processed" });
+        }
+
+        await db.update(paymentTransactions)
+          .set({ status: "completed" })
+          .where(eq(paymentTransactions.id, input.paymentTransactionId));
+
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + input.durationMonths);
+
+        await db.insert(premiumSubscriptions).values({
+          userId: paymentTx[0].userId,
+          durationMonths: input.durationMonths,
+          priceMMK: paymentTx[0].amount,
+          expiresAt,
+        });
+
+        await db.update(users)
+          .set({
+            isPremium: true,
+            premiumExpiresAt: expiresAt,
+          })
+          .where(eq(users.id, paymentTx[0].userId));
+
+        return { success: true, expiresAt };
+      }),
+
+    // Reject premium request
+    rejectPremiumRequest: adminProcedure
+      .input(z.object({
+        paymentTransactionId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        await db.update(paymentTransactions)
+          .set({ status: "failed" })
+          .where(eq(paymentTransactions.id, input.paymentTransactionId));
+
+        return { success: true };
       }),
   }),
 

@@ -454,3 +454,82 @@
 - [x] Add game instructions
 - [x] Add New Game and Back buttons
 - [x] Test game functionality - all working
+
+
+## Session 13 - Update Premium to Use MMK Currency - IN PROGRESS
+
+### Database Schema Update - COMPLETED
+- [x] Rename energyCoreBalance to mykBalance in schema.ts
+- [x] Generate migration SQL (0003_shallow_wilson_fisk.sql)
+- [x] Replace all energyCoreBalance references with mykBalance in server code
+- [x] Replace all energyCoreBalance references with mykBalance in client code
+- [ ] Execute migration SQL on database
+
+### Currency Separation - IN PROGRESS
+- [x] Energy Core: Shop item redemption only
+- [x] MMK: Premium subscription purchases only
+- [x] Premium.tsx shows MMK balance and pricing
+- [x] Payment modal shows payment phone number directly
+- [ ] Shop page shows Energy Core balance
+- [ ] Verify Energy Core validation for shop items
+- [ ] Test premium purchase with MMK (no Energy Core check)
+- [ ] Test shop redemption with Energy Core (no MMK check)
+
+
+## Session 14 - Admin Approval Workflow for Premium - IN PROGRESS
+
+### Payment Request System - IN PROGRESS
+- [ ] Update purchasePremium mutation to create pending request
+- [ ] Store transaction ID with pending status
+- [ ] User sees "Waiting for admin approval" message
+- [ ] Add paymentRequests table to schema (if needed)
+
+### Admin Dashboard Premium Panel - IN PROGRESS
+- [ ] Add "Pending Requests" tab to admin dashboard
+- [ ] Display pending premium purchase requests
+- [ ] Show user name, plan, amount, transaction ID
+- [ ] Add Approve/Reject buttons
+
+### Admin Approval Logic - IN PROGRESS
+- [ ] Create approvePremiumRequest mutation
+- [ ] Verify transaction ID format
+- [ ] Activate premium on approval
+- [ ] Send notification to user
+- [ ] Handle rejection flow
+
+### Testing
+- [ ] Test user purchase flow (creates pending request)
+- [ ] Test admin approval (activates premium)
+- [ ] Test admin rejection (cancels request)
+- [ ] Verify user notification on approval
+
+## Session 14 - Admin Approval Workflow - COMPLETED
+
+### Payment Request System - COMPLETED
+- [x] Update purchasePremium mutation to create pending request
+- [x] Store transaction ID with pending status
+- [x] User sees "Payment request submitted. Waiting for admin approval." message
+- [x] Use existing paymentTransactions table with pending status
+
+### Admin Dashboard Premium Panel - COMPLETED
+- [x] Add "Pending Requests" tab to admin dashboard
+- [x] Display pending premium purchase requests with user info
+- [x] Show user name, email, amount, transaction ID
+- [x] Add Approve/Reject buttons for each request
+
+### Admin Approval Logic - COMPLETED
+- [x] Create getPendingPremiumRequests query
+- [x] Create approvePremiumRequest mutation
+- [x] Create rejectPremiumRequest mutation
+- [x] Verify transaction ID format (5 digits)
+- [x] Activate premium on approval with specified duration
+- [x] Update user isPremium and premiumExpiresAt fields
+- [x] Mark transaction as completed/failed
+
+### User Experience - COMPLETED
+- [x] User submits transaction ID
+- [x] Payment request created with pending status
+- [x] User sees pending approval message
+- [x] Admin reviews in Pending Requests tab
+- [x] Admin approves/rejects request
+- [x] Premium activates on approval

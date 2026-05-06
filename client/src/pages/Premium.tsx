@@ -96,11 +96,7 @@ export default function Premium() {
       }
     }
 
-    if ((userProfile.data?.energyCoreBalance || 0) < finalPrice) {
-      toast.error(`Insufficient balance. You need ${finalPrice} MMK`);
-      return;
-    }
-
+    // No balance check required - user can purchase premium anytime
     setSelectedPlanForPayment({...selectedPlanData, price: finalPrice});
     setShowPaymentModal(true);
     setPaymentConfirmed(false);
@@ -120,7 +116,7 @@ export default function Premium() {
         transactionId: transactionId,
       });
       
-      toast.success("Premium activated successfully!");
+      toast.success("Payment request submitted! Waiting for admin approval.");
       setShowPaymentModal(false);
       setSelectedPlanForPayment(null);
       setPaymentConfirmed(false);
@@ -196,13 +192,11 @@ export default function Premium() {
           </Card>
         </div>
 
-        {/* Your Balance */}
+        {/* Payment Info */}
         <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-4 md:p-6 text-center">
-          <p className="text-xs md:text-sm text-muted-foreground mb-2">Your Account Balance</p>
-          <p className="text-2xl md:text-4xl font-bold text-purple-600 flex items-center justify-center gap-2">
-            <Zap className="w-6 h-6 md:w-8 md:h-8 text-yellow-500" />
-            {(userProfile.data?.energyCoreBalance || 0).toLocaleString()} MMK
-          </p>
+          <p className="text-xs md:text-sm text-muted-foreground mb-2">Payment Method</p>
+          <p className="text-lg md:text-xl font-semibold text-purple-600">KBZ Pay / AYA Pay</p>
+          <p className="text-sm text-muted-foreground mt-2">Click 'Upgrade Now' to proceed with payment</p>
         </div>
 
         {/* Premium Plans */}
@@ -256,7 +250,7 @@ export default function Premium() {
                   {/* Purchase Button */}
                   <Button
                     onClick={() => handlePurchase(plan.id)}
-                    disabled={(userProfile.data?.energyCoreBalance || 0) < plan.price && !userProfile.data?.isPremium}
+                    disabled={(userProfile.data?.mykBalance || 0) < plan.price && !userProfile.data?.isPremium}
                     className={`w-full ${
                       plan.popular
                         ? "bg-purple-600 hover:bg-purple-700"
@@ -265,9 +259,9 @@ export default function Premium() {
                   >
                     Upgrade Now
                   </Button>
-                  {(userProfile.data?.energyCoreBalance || 0) < plan.price && !userProfile.data?.isPremium && (
+                  {(userProfile.data?.mykBalance || 0) < plan.price && !userProfile.data?.isPremium && (
                     <p className="text-xs text-red-600 text-center">
-                      You need {(plan.price - (userProfile.data?.energyCoreBalance || 0)).toLocaleString()} more MMK
+                      You need {(plan.price - (userProfile.data?.mykBalance || 0)).toLocaleString()} more MMK
                     </p>
                   )}
                 </CardContent>

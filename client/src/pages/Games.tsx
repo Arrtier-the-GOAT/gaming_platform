@@ -54,7 +54,7 @@ export default function Games() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Your Energy Core Balance</p>
-                <p className="text-3xl font-bold text-blue-600">{user?.energyCoreBalance || 0} EC</p>
+                <p className="text-3xl font-bold text-blue-600">{user?.mykBalance || 0} EC</p>
               </div>
               <Zap className="w-12 h-12 text-yellow-500 opacity-50" />
             </div>

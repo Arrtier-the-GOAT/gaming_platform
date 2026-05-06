@@ -23,11 +23,11 @@
 - [x] Game scores/results table
 
 ## Shop & Currency
-- [ ] Shop page with game currency items (MLBB Diamond, PUBG UC, Telegram Premium, HOK, Arena Breakout)
-- [ ] Energy core purchase system
+- [x] Shop page with game currency items (MLBB Diamond, PUBG UC, Telegram Premium, HOK, Arena Breakout)
+- [x] Energy core purchase system
 - [ ] Admin shop management (add/edit/remove items, set prices)
-- [ ] User redemption form (Game ID, In-game name, Server ID for MLBB)
-- [ ] Payment integration (KBZ Pay, AyaPay, UAB Pay)
+- [x] User redemption form (Game ID, In-game name, Server ID for MLBB)
+- [x] Payment integration (KBZ Pay, AyaPay, UAB Pay)
 
 ## Premium System
 - [ ] Premium subscription plans (1 month: 10,000 MMK, 3 months: 30,000 MMK, 5 months: 49,000 MMK)

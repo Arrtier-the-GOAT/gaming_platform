@@ -13,25 +13,40 @@ export default function Payment() {
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [copied, setCopied] = useState(false);
 
-  const initiatePayment = trpc.payment.initiatePayment.useMutation();
-
   const handleInitiatePayment = () => {
     if (!amount || parseFloat(amount) <= 0) {
       alert("Please enter a valid amount");
       return;
     }
 
-    initiatePayment.mutate(
-      {
+    // Generate payment reference
+    const paymentRef = `PAY-${user?.id || 'unknown'}-${Date.now()}`;
+
+    const paymentMethods: any = {
+      kbz: {
+        method: 'KBZ Pay',
+        phoneNumber: '09787398133',
+        name: 'Aung Han Thin',
         amount: parseFloat(amount),
-        method: selectedMethod,
+        reference: paymentRef,
       },
-      {
-        onSuccess: (data) => {
-          setPaymentDetails(data);
-        },
-      }
-    );
+      aya: {
+        method: 'AYA Pay',
+        phoneNumber: '09787398133',
+        name: 'Aung Han Thin',
+        amount: parseFloat(amount),
+        reference: paymentRef,
+      },
+      uab: {
+        method: 'UAB Pay',
+        phoneNumber: '09787398133',
+        name: 'Aung Han Thin',
+        amount: parseFloat(amount),
+        reference: paymentRef,
+      },
+    };
+
+    setPaymentDetails(paymentMethods[selectedMethod]);
   };
 
   const copyToClipboard = (text: string) => {
@@ -44,6 +59,14 @@ export default function Payment() {
     return (
       <div className="container mx-auto py-8">
         <p>Please log in to make payments</p>
+      </div>
+    );
+  }
+
+  if (!user.id) {
+    return (
+      <div className="container mx-auto py-8">
+        <p>Error: User information not available</p>
       </div>
     );
   }
@@ -137,11 +160,11 @@ export default function Payment() {
             {/* Submit Button */}
             <Button
               onClick={handleInitiatePayment}
-              disabled={initiatePayment.isPending || !amount}
+              disabled={!amount}
               className="w-full"
               size="lg"
             >
-              {initiatePayment.isPending ? "Processing..." : "Continue to Payment"}
+              Continue to Payment
             </Button>
           </CardContent>
         </Card>

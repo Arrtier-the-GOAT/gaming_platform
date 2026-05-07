@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Trophy, Medal } from "lucide-react";
+import { Trophy, Medal, Gift } from "lucide-react";
 
 export default function Leaderboard() {
   const leaderboard = trpc.leaderboard.getTopPlayers.useQuery({ limit: 10 });
@@ -27,6 +27,7 @@ export default function Leaderboard() {
       <Card>
         <CardHeader>
           <CardTitle>Top Players This Week</CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">🎁 Top 3 players earn weekly rewards!</p>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -35,7 +36,7 @@ export default function Leaderboard() {
                 key={player.userId}
                 className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 transition"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
                   <div className="flex items-center justify-center w-10 h-10">
                     {getMedalIcon(index + 1)}
                   </div>
@@ -44,9 +45,17 @@ export default function Leaderboard() {
                     <p className="text-sm text-muted-foreground">{player.gamesWon} wins</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-600">{player.totalPoints}</p>
-                  <p className="text-xs text-muted-foreground">points</p>
+                <div className="flex items-center gap-4">
+                  {index < 3 && (
+                    <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                      <Gift className="w-4 h-4" />
+                      Weekly Rewards
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-600">{player.totalPoints}</p>
+                    <p className="text-xs text-muted-foreground">points</p>
+                  </div>
                 </div>
               </div>
             ))}

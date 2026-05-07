@@ -560,3 +560,16 @@
 - [x] All Upgrade Now buttons now enabled without balance validation
 - [x] Users can purchase any premium plan freely
 - [x] Verified on Premium page - all buttons clickable
+
+## Session 17 - Add Weekly Rewards Information - COMPLETED
+
+### Leaderboard Updates - COMPLETED
+- [x] Added "🎁 Top 3 players earn weekly rewards!" text to leaderboard header
+- [x] Added "Weekly Rewards" badge for top 3 players (green text with gift icon)
+- [x] Badge displays next to player points on leaderboard
+
+### Premium Page Updates - COMPLETED
+- [x] Added "Weekly rewards for top 3 players" to 1 Month plan features
+- [x] Added "Weekly rewards for top 3 players" to 3 Months plan features
+- [x] Added "Weekly rewards for top 3 players" to 5 Months plan features
+- [x] All premium plans now highlight weekly rewards benefit

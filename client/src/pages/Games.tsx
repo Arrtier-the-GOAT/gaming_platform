@@ -15,9 +15,27 @@ const GAMES = [
     icon: "🍬",
     category: "Puzzle",
   },
+  {
+    id: 2,
+    name: "Endless Runner",
+    description: "Run, jump, and avoid obstacles. Mobile friendly!",
+    players: "1",
+    reward: "10 EC",
+    icon: "🏃",
+    category: "Action",
+  },
+  {
+    id: 3,
+    name: "Wordle Clone",
+    description: "Guess the 5-letter word in 6 attempts",
+    players: "1",
+    reward: "10 EC",
+    icon: "🔤",
+    category: "Word",
+  },
 ];
 
-const CATEGORIES = ["All", "Puzzle"];
+const CATEGORIES = ["All", "Puzzle", "Action", "Word"];
 
 export default function Games() {
   const { user, isAuthenticated } = useAuth();

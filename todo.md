@@ -573,3 +573,38 @@
 - [x] Added "Weekly rewards for top 3 players" to 3 Months plan features
 - [x] Added "Weekly rewards for top 3 players" to 5 Months plan features
 - [x] All premium plans now highlight weekly rewards benefit
+
+
+## Session 18 - Implement Endless Runner and Wordle Clone Games
+
+### Endless Runner Game
+- [ ] Create EndlessRunner.tsx component
+- [ ] Implement player character with jump mechanics
+- [ ] Add obstacles and platforms
+- [ ] Implement score tracking system
+- [ ] Add leaderboard point submission on game end
+- [ ] Mobile-friendly touch controls (tap to jump)
+- [ ] Add game over and restart functionality
+- [ ] Test on mobile devices
+
+### Wordle Clone Game
+- [ ] Create WordleClone.tsx component
+- [ ] Implement 6-attempt word guessing system
+- [ ] Add word validation (check if valid English word)
+- [ ] Implement color-coded feedback (green/yellow/gray)
+- [ ] Add leaderboard point system (points based on attempts)
+- [ ] Mobile-friendly keyboard/input
+- [ ] Add game over and restart functionality
+- [ ] Test on mobile devices
+
+### Games Page Integration
+- [ ] Add Endless Runner to games list
+- [ ] Add Wordle Clone to games list
+- [ ] Update total games count to 3
+- [ ] Verify both games appear on Games page
+
+### Testing
+- [ ] Test Endless Runner gameplay
+- [ ] Test Wordle Clone gameplay
+- [ ] Verify leaderboard points are awarded
+- [ ] Test on mobile devices

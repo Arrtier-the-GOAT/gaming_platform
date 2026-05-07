@@ -25,7 +25,7 @@ import AdminRewards from "./pages/AdminRewards";
 import AdminAchievements from "./pages/AdminAchievements";
 import AdminEvents from "./pages/AdminEvents";
 import CandyCrush from '@/pages/games/CandyCrush';
-import EndlessRunner from '@/pages/games/EndlessRunner';
+import BubbleShooter from '@/pages/games/BubbleShooter';
 import WordleClone from '@/pages/games/WordleClone';
 import { PWAPrompt } from "./components/PWAPrompt";
 
@@ -46,7 +46,7 @@ function Router() {
       
       {/* Game routes */}
       <Route path={"/play/candy-crush"} component={CandyCrush} />
-      <Route path={"/play/endless-runner"} component={EndlessRunner} />
+      <Route path={"/play/bubble-shooter"} component={BubbleShooter} />
       <Route path={"/play/wordle-clone"} component={WordleClone} />
       
       {/* Admin routes */}

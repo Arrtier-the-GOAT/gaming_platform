@@ -17,11 +17,11 @@ const GAMES = [
   },
   {
     id: 2,
-    name: "Endless Runner",
-    description: "Run, jump, and avoid obstacles. Mobile friendly!",
+    name: "Bubble Shooter",
+    description: "Tap to aim and shoot bubbles. Clear them all!",
     players: "1",
     reward: "10 EC",
-    icon: "🏃",
+    icon: "🫧",
     category: "Action",
   },
   {

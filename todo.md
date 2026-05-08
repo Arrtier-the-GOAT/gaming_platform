@@ -643,3 +643,34 @@
 - [x] Test score tracking
 - [x] Test game completion and win state
 - [x] Verify leaderboard points are submitted
+
+
+## Session 20 - Add 12-Digit User ID Display - COMPLETED
+
+### User ID Feature - COMPLETED
+- [x] Display User ID on user profile page
+- [x] Format User ID as 12-digit number (padded with zeros)
+- [x] Show User ID alongside Name, Email, and Phone
+- [x] Use monospace font for User ID display
+- [x] Verify User ID is unique per user (database auto-increment ID)
+- [x] Test User ID display on profile page
+
+
+## Session 20 - Add 12-Digit User ID Display with Copy Feature - COMPLETED
+
+### User ID Display Feature - COMPLETED
+- [x] Display User ID on user profile page
+- [x] Format User ID as 12-digit number (padded with zeros)
+- [x] Show User ID alongside Name, Email, and Phone
+- [x] Use monospace font for User ID display
+- [x] Verify User ID is unique per user (database auto-increment ID)
+- [x] Test User ID display on profile page
+
+### User ID Copy Feature - COMPLETED
+- [x] Add copy button next to User ID
+- [x] Implement clipboard copy functionality
+- [x] Show copy icon by default
+- [x] Show green checkmark after successful copy
+- [x] Display toast notification "User ID copied to clipboard"
+- [x] Reset icon after 2 seconds
+- [x] Test copy button functionality

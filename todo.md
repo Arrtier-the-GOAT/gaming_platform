@@ -674,3 +674,29 @@
 - [x] Display toast notification "User ID copied to clipboard"
 - [x] Reset icon after 2 seconds
 - [x] Test copy button functionality
+
+
+## Session 21 - Implement Dual Leaderboard System - COMPLETED
+
+### Game Points Leaderboard - COMPLETED
+- [x] Create backend procedure getTopPlayers (already existed)
+- [x] Display top players ranked by game points
+- [x] Show player name, wins count, and total points
+- [x] Add medal icons for top 3 positions
+- [x] Show weekly rewards indicator for top 3
+
+### Referrer Leaderboard - COMPLETED
+- [x] Create backend procedure getTopReferrers
+- [x] Create backend procedure getReferrerRank
+- [x] Display top referrers ranked by premium users referred
+- [x] Show referrer name, email, and premium user count
+- [x] Add medal icons for top 3 referrers
+- [x] Add tab-based navigation between leaderboards
+
+### Frontend Implementation - COMPLETED
+- [x] Update Leaderboard page with Tabs component
+- [x] Create Game Points tab with player leaderboard
+- [x] Create Top Referrers tab with referrer leaderboard
+- [x] Add proper icons (Trophy, Medal, Users)
+- [x] Add loading states and empty state messages
+- [x] Test both tabs and verify functionality

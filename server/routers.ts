@@ -400,6 +400,60 @@ export const appRouter = router({
       };
     }),
 
+    getTopReferrers: publicProcedure
+      .input(z.object({ limit: z.number().default(100) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const referrerStats = await db.select({
+          referrerId: referrals.referrerId,
+          premiumUserCount: sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`.as('premiumUserCount'),
+        })
+          .from(referrals)
+          .innerJoin(users, eq(referrals.refereeId, users.id))
+          .groupBy(referrals.referrerId)
+          .orderBy(desc(sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`))
+          .limit(input.limit);
+
+        const result = await Promise.all(
+          referrerStats.map(async (entry: any) => {
+            const referrerUser = await db.select().from(users)
+              .where(eq(users.id, entry.referrerId)).limit(1);
+            return {
+              referrerId: entry.referrerId,
+              referrerName: referrerUser[0]?.name || "Unknown",
+              referrerEmail: referrerUser[0]?.email,
+              premiumUserCount: (entry.premiumUserCount as number) || 0,
+            };
+          })
+        );
+
+        return result;
+      }),
+
+    getReferrerRank: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const referrerStats = await db.select({
+        referrerId: referrals.referrerId,
+        premiumUserCount: sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`.as('premiumUserCount'),
+      })
+        .from(referrals)
+        .innerJoin(users, eq(referrals.refereeId, users.id))
+        .groupBy(referrals.referrerId)
+        .orderBy(desc(sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`));
+
+      const rank = referrerStats.findIndex((entry: any) => entry.referrerId === ctx.user.id) + 1;
+      const userEntry = referrerStats.find((entry: any) => entry.referrerId === ctx.user.id);
+
+      return {
+        rank: rank || null,
+        premiumUserCount: (userEntry?.premiumUserCount as number) || 0,
+      };
+    }),
+
     // Admin reward management
     setReward: adminProcedure
       .input(z.object({

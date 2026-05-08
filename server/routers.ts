@@ -24,7 +24,10 @@ import {
   energyCorePackages,
   paymentTransactions,
   rewardCodes,
-  weeklyLeaderboardSnapshots
+  weeklyLeaderboardSnapshots,
+  leaderboardSeasons,
+  seasonalGameLeaderboardSnapshots,
+  seasonalReferrerLeaderboardSnapshots
 } from "../drizzle/schema";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
@@ -453,6 +456,81 @@ export const appRouter = router({
         premiumUserCount: (userEntry?.premiumUserCount as number) || 0,
       };
     }),
+
+    // Season management
+    getCurrentSeason: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const season = await db.select().from(leaderboardSeasons)
+        .where(eq(leaderboardSeasons.isActive, true))
+        .limit(1);
+      
+      return season[0] || null;
+    }),
+
+    getAllSeasons: publicProcedure
+      .input(z.object({ limit: z.number().default(50) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        return await db.select().from(leaderboardSeasons)
+          .orderBy(desc(leaderboardSeasons.seasonNumber))
+          .limit(input.limit);
+      }),
+
+    getGameLeaderboardForSeason: publicProcedure
+      .input(z.object({ seasonId: z.number(), limit: z.number().default(100) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const snapshots = await db.select().from(seasonalGameLeaderboardSnapshots)
+          .where(eq(seasonalGameLeaderboardSnapshots.seasonId, input.seasonId))
+          .orderBy(seasonalGameLeaderboardSnapshots.rank)
+          .limit(input.limit);
+
+        const result = await Promise.all(
+          snapshots.map(async (entry) => {
+            const user = await db.select().from(users)
+              .where(eq(users.id, entry.userId)).limit(1);
+            return {
+              ...entry,
+              userName: user[0]?.name || "Unknown",
+              userEmail: user[0]?.email,
+            };
+          })
+        );
+
+        return result;
+      }),
+
+    getReferrerLeaderboardForSeason: publicProcedure
+      .input(z.object({ seasonId: z.number(), limit: z.number().default(100) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const snapshots = await db.select().from(seasonalReferrerLeaderboardSnapshots)
+          .where(eq(seasonalReferrerLeaderboardSnapshots.seasonId, input.seasonId))
+          .orderBy(seasonalReferrerLeaderboardSnapshots.rank)
+          .limit(input.limit);
+
+        const result = await Promise.all(
+          snapshots.map(async (entry) => {
+            const referrer = await db.select().from(users)
+              .where(eq(users.id, entry.referrerId)).limit(1);
+            return {
+              ...entry,
+              referrerName: referrer[0]?.name || "Unknown",
+              referrerEmail: referrer[0]?.email,
+            };
+          })
+        );
+
+        return result;
+      }),
 
     // Admin reward management
     setReward: adminProcedure

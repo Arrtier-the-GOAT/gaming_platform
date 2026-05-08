@@ -700,3 +700,40 @@
 - [x] Add proper icons (Trophy, Medal, Users)
 - [x] Add loading states and empty state messages
 - [x] Test both tabs and verify functionality
+
+
+## Session 22 - Implement Seasonal Leaderboard System - IN PROGRESS
+
+### Database Schema - COMPLETED
+- [x] Create leaderboardSeasons table
+- [x] Create seasonalGameLeaderboardSnapshots table
+- [x] Create seasonalReferrerLeaderboardSnapshots table
+- [x] Apply migrations to database
+
+### Backend Procedures - COMPLETED
+- [x] Add getCurrentSeason() procedure
+- [x] Add getAllSeasons() procedure
+- [x] Add getGameLeaderboardForSeason() procedure
+- [x] Add getReferrerLeaderboardForSeason() procedure
+- [x] Import seasonal tables in routers
+
+### Frontend Implementation - COMPLETED
+- [x] Add season selector dropdown to Leaderboard page
+- [x] Display current season info
+- [x] Show season date range
+- [x] Add season selection functionality
+- [x] Display historical season leaderboards
+- [x] Add loading states for season data
+
+### Admin Dashboard - IN PROGRESS
+- [ ] Add seasonal leaderboard viewer to admin
+- [ ] Display season management options
+- [ ] Add season creation interface
+- [ ] Add manual archive functionality
+
+### Automatic Scheduling - TODO
+- [ ] Create weekly archive job
+- [ ] Archive current season data
+- [ ] Create new season
+- [ ] Reset leaderboard points
+- [ ] Setup cron job

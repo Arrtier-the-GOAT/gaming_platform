@@ -339,3 +339,51 @@ export const weeklyLeaderboardSnapshots = mysqlTable("weeklyLeaderboardSnapshots
 
 export type WeeklyLeaderboardSnapshot = typeof weeklyLeaderboardSnapshots.$inferSelect;
 export type InsertWeeklyLeaderboardSnapshot = typeof weeklyLeaderboardSnapshots.$inferInsert;
+
+/**
+ * Leaderboard seasons for tracking seasonal data
+ */
+export const leaderboardSeasons = mysqlTable("leaderboardSeasons", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonNumber: int("seasonNumber").notNull().unique(),
+  seasonName: varchar("seasonName", { length: 255 }),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LeaderboardSeason = typeof leaderboardSeasons.$inferSelect;
+export type InsertLeaderboardSeason = typeof leaderboardSeasons.$inferInsert;
+
+/**
+ * Seasonal game leaderboard snapshots
+ */
+export const seasonalGameLeaderboardSnapshots = mysqlTable("seasonalGameLeaderboardSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull(),
+  userId: int("userId").notNull(),
+  rank: int("rank").notNull(),
+  totalPoints: int("totalPoints").notNull(),
+  gamesWon: int("gamesWon").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SeasonalGameLeaderboardSnapshot = typeof seasonalGameLeaderboardSnapshots.$inferSelect;
+export type InsertSeasonalGameLeaderboardSnapshot = typeof seasonalGameLeaderboardSnapshots.$inferInsert;
+
+/**
+ * Seasonal referrer leaderboard snapshots
+ */
+export const seasonalReferrerLeaderboardSnapshots = mysqlTable("seasonalReferrerLeaderboardSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull(),
+  referrerId: int("referrerId").notNull(),
+  rank: int("rank").notNull(),
+  premiumUserCount: int("premiumUserCount").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SeasonalReferrerLeaderboardSnapshot = typeof seasonalReferrerLeaderboardSnapshots.$inferSelect;
+export type InsertSeasonalReferrerLeaderboardSnapshot = typeof seasonalReferrerLeaderboardSnapshots.$inferInsert;

@@ -29,6 +29,13 @@
       "when": 1778073430122,
       "tag": "0003_shallow_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1778249799180,
+      "tag": "0004_typical_carnage",
+      "breakpoints": true
     }
   ]
 }

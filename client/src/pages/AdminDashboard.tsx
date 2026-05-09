@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { BarChart3, Settings, Users, ShoppingCart, Trophy, Zap, TrendingUp, Activity } from "lucide-react";
 import { toast } from "sonner";
+import AdminShopManagement from "./AdminShopManagement";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -263,35 +264,7 @@ export default function AdminDashboard() {
 
         {/* Shop Tab */}
         {activeTab === "shop" && (
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Shop Management</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Item Name</label>
-                <Input placeholder="e.g., MLBB Diamond" className="bg-slate-700 border-slate-600 text-white" />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Price (EC)</label>
-                  <Input type="number" placeholder="50" className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Game</label>
-                  <Input placeholder="MLBB" className="bg-slate-700 border-slate-600 text-white" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Description</label>
-                <Input placeholder="Item description" className="bg-slate-700 border-slate-600 text-white" />
-              </div>
-
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">Add Item</Button>
-            </CardContent>
-          </Card>
+          <AdminShopManagement />
         )}
 
         {/* Premium Tab */}

@@ -1253,6 +1253,78 @@ export const appRouter = router({
 
         return { success: true };
       }),
+
+    // Shop management
+    getShopItems: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      return await db.select().from(shopItems).orderBy(desc(shopItems.createdAt));
+    }),
+
+    createShopItem: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string(),
+        energyCorePrice: z.number(),
+        game: z.string(),
+        category: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        await db.insert(shopItems).values({
+          name: input.name,
+          description: input.description,
+          energyCorePrice: input.energyCorePrice,
+          game: input.game,
+          category: input.category,
+        });
+
+        return { success: true };
+      }),
+
+    updateShopItem: adminProcedure
+      .input(z.object({
+        itemId: z.number(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        energyCorePrice: z.number().optional(),
+        game: z.string().optional(),
+        category: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const updateData: any = {};
+        if (input.name !== undefined) updateData.name = input.name;
+        if (input.description !== undefined) updateData.description = input.description;
+        if (input.energyCorePrice !== undefined) updateData.energyCorePrice = input.energyCorePrice;
+        if (input.game !== undefined) updateData.game = input.game;
+        if (input.category !== undefined) updateData.category = input.category;
+        if (input.isActive !== undefined) updateData.isActive = input.isActive;
+
+        await db.update(shopItems)
+          .set(updateData)
+          .where(eq(shopItems.id, input.itemId));
+
+        return { success: true };
+      }),
+
+    deleteShopItem: adminProcedure
+      .input(z.object({ itemId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        await db.delete(shopItems)
+          .where(eq(shopItems.id, input.itemId));
+
+        return { success: true };
+      }),
   }),
 
   // Reward codes and weekly leaderboard

@@ -133,7 +133,7 @@ export default function Premium() {
   const isPremium = userProfile.data?.isPremium;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-background to-blue-50 py-6 md:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background py-6 md:py-12">
       <div className="container mx-auto px-3 md:px-4 space-y-6 md:space-y-12">
         {/* Header */}
         <div className="text-center space-y-3 md:space-y-4 mb-6 md:mb-12">
@@ -154,9 +154,9 @@ export default function Premium() {
 
         {/* Benefits Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-12">
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="border-primary/20 bg-card">
             <CardHeader className="pb-2 md:pb-3">
-              <Zap className="w-5 h-5 md:w-6 md:h-6 text-yellow-500 mb-2" />
+              <Zap className="w-5 h-5 md:w-6 md:h-6 text-yellow-400 mb-2" />
               <CardTitle className="text-sm md:text-lg">2-3x Points</CardTitle>
             </CardHeader>
             <CardContent>
@@ -164,9 +164,9 @@ export default function Premium() {
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-primary/20 bg-card">
             <CardHeader className="pb-2 md:pb-3">
-              <Gift className="w-5 h-5 md:w-6 md:h-6 text-blue-500 mb-2" />
+              <Gift className="w-5 h-5 md:w-6 md:h-6 text-blue-400 mb-2" />
               <CardTitle className="text-sm md:text-lg">Exclusive Rewards</CardTitle>
             </CardHeader>
             <CardContent>
@@ -174,9 +174,9 @@ export default function Premium() {
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-primary/20 bg-card">
             <CardHeader className="pb-2 md:pb-3">
-              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-green-500 mb-2" />
+              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-green-400 mb-2" />
               <CardTitle className="text-sm md:text-lg">VIP Status</CardTitle>
             </CardHeader>
             <CardContent>
@@ -184,9 +184,9 @@ export default function Premium() {
             </CardContent>
           </Card>
 
-          <Card className="border-pink-200 bg-pink-50">
+          <Card className="border-primary/20 bg-card">
             <CardHeader className="pb-2 md:pb-3">
-              <Users className="w-5 h-5 md:w-6 md:h-6 text-pink-500 mb-2" />
+              <Users className="w-5 h-5 md:w-6 md:h-6 text-pink-400 mb-2" />
               <CardTitle className="text-sm md:text-lg">Priority Support</CardTitle>
             </CardHeader>
             <CardContent>
@@ -196,9 +196,9 @@ export default function Premium() {
         </div>
 
         {/* Payment Info */}
-        <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-4 md:p-6 text-center">
+        <div className="bg-card border border-primary/20 rounded-lg p-4 md:p-6 text-center">
           <p className="text-xs md:text-sm text-muted-foreground mb-2">Payment Method</p>
-          <p className="text-lg md:text-xl font-semibold text-purple-600">KBZ Pay / AYA Pay</p>
+          <p className="text-lg md:text-xl font-semibold text-primary">KBZ Pay / AYA Pay</p>
           <p className="text-sm text-muted-foreground mt-2">Click 'Upgrade Now' to proceed with payment</p>
         </div>
 
@@ -212,8 +212,8 @@ export default function Premium() {
                 key={plan.id}
                 className={`relative transition-all hover:shadow-xl ${
                   plan.popular
-                    ? "border-purple-500 border-2 md:scale-105 bg-gradient-to-br from-purple-50 to-blue-50"
-                    : "border-gray-200"
+                    ? "border-primary border-2 md:scale-105 bg-card"
+                    : "border-border"
                 }`}
               >
                 {plan.popular && (

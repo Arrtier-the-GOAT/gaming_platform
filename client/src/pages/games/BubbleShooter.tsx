@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Bomb, Sparkles, Target } from "lucide-react";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 
 const WIDTH = 420;
 const HEIGHT = 720;
@@ -134,7 +134,7 @@ function key(row: number, col: number) {
 
 export default function BubbleShooter() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [state, setState] = useState<GameState>("ready");
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
@@ -698,7 +698,7 @@ export default function BubbleShooter() {
     <div className="min-h-screen bg-slate-950 text-slate-100 px-4 py-6">
       <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setLocation("/games")}>
+          <Button variant="outline" onClick={() => navigate("/games")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Exit
           </Button>
@@ -780,7 +780,7 @@ export default function BubbleShooter() {
                   <Button
                     className="flex-1"
                     variant="outline"
-                    onClick={() => setLocation("/games")}
+                    onClick={() => navigate("/games")}
                   >
                     Exit
                   </Button>
@@ -809,7 +809,7 @@ export default function BubbleShooter() {
                   >
                     Next Level
                   </Button>
-                  <Button className="flex-1" variant="outline" onClick={() => setLocation("/games")}>
+                  <Button className="flex-1" variant="outline" onClick={() => navigate("/games")}>
                     Exit
                   </Button>
                 </div>

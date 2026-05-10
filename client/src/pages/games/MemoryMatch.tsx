@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RotateCcw, Timer } from "lucide-react";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 
 const GAME_DURATION = 60;
 const CARD_BACK = "❓";
@@ -25,7 +25,7 @@ function shuffleDeck(): MemoryCard[] {
 }
 
 export default function MemoryMatch() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<GameStatus>("ready");
   const [cards, setCards] = useState<MemoryCard[]>(() => shuffleDeck());
   const [flipped, setFlipped] = useState<number[]>([]);
@@ -164,7 +164,7 @@ export default function MemoryMatch() {
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex flex-wrap gap-2 justify-between items-center">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setLocation("/games")}>
+            <Button variant="outline" onClick={() => navigate("/games")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Exit
             </Button>
@@ -242,7 +242,7 @@ export default function MemoryMatch() {
                 <Button className="flex-1" onClick={startGame}>
                   Retry
                 </Button>
-                <Button className="flex-1" variant="outline" onClick={() => setLocation("/games")}>
+                <Button className="flex-1" variant="outline" onClick={() => navigate("/games")}>
                   Exit
                 </Button>
               </div>
@@ -253,4 +253,3 @@ export default function MemoryMatch() {
     </div>
   );
 }
-

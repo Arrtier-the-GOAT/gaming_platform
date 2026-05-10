@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gem, RotateCcw, Timer, TriangleAlert } from "lucide-react";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 
 const CANVAS_WIDTH = 440;
 const CANVAS_HEIGHT = 720;
@@ -242,7 +242,7 @@ function drawMiner(
 
 export default function GoldMiner() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<GameStatus>("ready");
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -645,7 +645,7 @@ export default function GoldMiner() {
       <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex flex-wrap items-center gap-2 justify-between">
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setLocation("/games")}>
+            <Button variant="outline" onClick={() => navigate("/games")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Exit
             </Button>
@@ -728,7 +728,7 @@ export default function GoldMiner() {
                   <Button
                     className="flex-1"
                     variant="outline"
-                    onClick={() => setLocation("/games")}
+                    onClick={() => navigate("/games")}
                   >
                     Exit
                   </Button>

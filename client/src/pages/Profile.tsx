@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
 
   const handleCopyUserId = () => {
     const userId = String(user?.id).padStart(12, '0');
@@ -29,7 +29,7 @@ export default function Profile() {
               window.history.back();
               return;
             }
-            setLocation("/");
+            navigate("/");
           }}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

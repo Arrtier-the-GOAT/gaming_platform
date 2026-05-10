@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "react-router-dom";
 
 const COLORS = ["Red", "Blue", "Green", "Yellow"] as const;
 const VALUES = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] as const;
@@ -57,7 +57,7 @@ export default function UnoCardGame() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-blue-50 py-8">
       <div className="container mx-auto px-4 max-w-3xl space-y-4">
-        <Link href="/games">
+        <Link to="/games">
           <Button variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Games

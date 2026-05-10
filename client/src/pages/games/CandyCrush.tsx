@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { useLocation } from 'wouter';
+import { useNavigate } from "react-router-dom";
 
 const GRID_SIZE = 8;
 const CANDY_TYPES = ['🍬', '🍭', '🍫', '🍊', '🍋', '🍓'];
@@ -15,7 +15,7 @@ interface Candy {
 }
 
 export default function CandyCrush() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [grid, setGrid] = useState<Candy[][]>([]);
   const [score, setScore] = useState(0);
   const [moves, setMoves] = useState(30);
@@ -254,7 +254,7 @@ export default function CandyCrush() {
             {gameOver ? 'Play Again' : 'New Game'}
           </Button>
           <Button
-            onClick={() => setLocation('/games')}
+            onClick={() => navigate("/games")}
             variant="outline"
             className="flex-1"
           >

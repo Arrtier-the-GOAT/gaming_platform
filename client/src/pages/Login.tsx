@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { type FormEvent, useState } from "react";
-import { useLocation } from "wouter";
+import { type FormEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type AuthMode = "login" | "register";
 
 export default function Login() {
   const { isAuthenticated, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const utils = trpc.useUtils();
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -23,29 +23,32 @@ export default function Login() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async () => {
       await utils.auth.me.invalidate();
-      setLocation("/");
+      navigate("/");
     },
   });
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: async () => {
       await utils.auth.me.invalidate();
-      setLocation("/");
+      navigate("/");
     },
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (isAuthenticated) {
-    setLocation("/");
-    return null;
-  }
+  if (isAuthenticated) return null;
 
   const isSubmitting = loginMutation.isPending || registerMutation.isPending;
   const mutationError = loginMutation.error?.message || registerMutation.error?.message;
@@ -66,7 +69,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl">Gaming Hub</CardTitle>

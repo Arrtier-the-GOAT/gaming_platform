@@ -1,16 +1,38 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
-import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { type FormEvent, useState } from "react";
 import { useLocation } from "wouter";
+
+type AuthMode = "login" | "register";
 
 export default function Login() {
   const { isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
+
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [referralCode, setReferralCode] = useState("");
+
+  const loginMutation = trpc.auth.login.useMutation({
+    onSuccess: async () => {
+      await utils.auth.me.invalidate();
+      setLocation("/");
+    },
+  });
+
+  const registerMutation = trpc.auth.register.useMutation({
+    onSuccess: async () => {
+      await utils.auth.me.invalidate();
+      setLocation("/");
+    },
+  });
 
   if (loading) {
     return (
@@ -25,67 +47,115 @@ export default function Login() {
     return null;
   }
 
-  const loginUrl = getLoginUrl();
+  const isSubmitting = loginMutation.isPending || registerMutation.isPending;
+  const mutationError = loginMutation.error?.message || registerMutation.error?.message;
+
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (mode === "login") {
+      await loginMutation.mutateAsync({ email, password });
+      return;
+    }
+
+    await registerMutation.mutateAsync({
+      name: name.trim() || undefined,
+      email,
+      password,
+      referralCode: referralCode.trim() || undefined,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl">Gaming Platform</CardTitle>
-          <CardDescription>Sign in to play games and earn rewards</CardDescription>
+          <CardTitle className="text-3xl">Gaming Hub</CardTitle>
+          <CardDescription>
+            {mode === "login" ? "Sign in with your email and password" : "Create a new account"}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="referral">Referral Code (Optional)</Label>
-            <Input
-              id="referral"
-              placeholder="Enter referral code"
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              If you have a referral code, enter it to get 200 bonus energy core
-            </p>
+
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={mode === "login" ? "default" : "outline"}
+              onClick={() => setMode("login")}
+            >
+              Sign In
+            </Button>
+            <Button
+              type="button"
+              variant={mode === "register" ? "default" : "outline"}
+              onClick={() => setMode("register")}
+            >
+              Register
+            </Button>
           </div>
 
-          <Button
-            onClick={() => {
-              if (referralCode) {
-                // Store referral code in session storage for sign-up
-                sessionStorage.setItem("referralCode", referralCode);
-              }
-              window.location.href = loginUrl;
-            }}
-            className="w-full"
-            size="lg"
-          >
-            Sign In with Manus
-          </Button>
+          <form className="space-y-4" onSubmit={onSubmit}>
+            {mode === "register" && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                />
+              </div>
+            )}
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t"></span>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                minLength={8}
+                required
+              />
             </div>
-          </div>
 
-          <div className="text-center text-sm text-muted-foreground">
-            <p>Don't have an account?</p>
-            <p>Sign in to create one automatically</p>
-          </div>
+            {mode === "register" && (
+              <div className="space-y-2">
+                <Label htmlFor="referral">Referral Code (Optional)</Label>
+                <Input
+                  id="referral"
+                  placeholder="Enter referral code"
+                  value={referralCode}
+                  onChange={e => setReferralCode(e.target.value)}
+                />
+              </div>
+            )}
 
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
-            <p className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Welcome Bonus!</p>
-            <ul className="text-blue-800 dark:text-blue-200 space-y-1 text-xs">
-              <li>✓ 100 Energy Core on sign up</li>
-              <li>✓ Unique referral code for your account</li>
-              <li>✓ 200 bonus Energy Core for each referral</li>
-            </ul>
-          </div>
+            {mutationError && <p className="text-sm text-red-600">{mutationError}</p>}
+
+            <Button className="w-full" size="lg" type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? "Please wait..."
+                : mode === "login"
+                  ? "Sign In"
+                  : "Create Account"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
   );
 }
+

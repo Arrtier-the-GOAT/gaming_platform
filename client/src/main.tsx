@@ -37,6 +37,27 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+const loadAnalyticsScript = () => {
+  if (typeof document === "undefined") return;
+
+  const analyticsEndpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT?.trim();
+  const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID?.trim();
+
+  if (!analyticsEndpoint || !websiteId) return;
+
+  const scriptId = "umami-analytics-script";
+  if (document.getElementById(scriptId)) return;
+
+  const analyticsScript = document.createElement("script");
+  analyticsScript.id = scriptId;
+  analyticsScript.defer = true;
+  analyticsScript.src = `${analyticsEndpoint.replace(/\/+$/, "")}/umami`;
+  analyticsScript.setAttribute("data-website-id", websiteId);
+  document.body.appendChild(analyticsScript);
+};
+
+loadAnalyticsScript();
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
@@ -59,3 +80,4 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </trpc.Provider>
 );
+

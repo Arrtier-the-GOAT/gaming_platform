@@ -1,5 +1,5 @@
 {
-  "name": "Gaming Platform - Multi-Game Hub",
+  "name": "Gaming Hub - Multi-Game Hub",
   "short_name": "Gaming Hub",
   "description": "Play games, earn rewards, and compete with players worldwide",
   "start_url": "/",
@@ -31,7 +31,7 @@
   "categories": ["games"],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f5f5' width='540' height='720'/><text x='50%' y='50%' font-size='60' font-weight='bold' fill='%233b82f6' text-anchor='middle' dominant-baseline='central'>Gaming Platform</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f5f5' width='540' height='720'/><text x='50%' y='50%' font-size='60' font-weight='bold' fill='%233b82f6' text-anchor='middle' dominant-baseline='central'>Gaming Hub</text></svg>",
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow"
@@ -89,3 +89,4 @@
     }
   }
 }
+

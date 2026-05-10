@@ -39,6 +39,22 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
+ * Local email/password credentials.
+ * Kept separate from users so OAuth-era user records can coexist.
+ */
+export const localAuthAccounts = mysqlTable("localAuthAccounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LocalAuthAccount = typeof localAuthAccounts.$inferSelect;
+export type InsertLocalAuthAccount = typeof localAuthAccounts.$inferInsert;
+
+/**
  * Referral tracking table
  */
 export const referrals = mysqlTable("referrals", {

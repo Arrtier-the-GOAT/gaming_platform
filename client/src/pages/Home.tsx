@@ -36,7 +36,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <Gamepad2 className="w-6 h-6 text-primary flex-shrink-0" />
-            <span className="font-bold text-lg md:text-xl truncate">Gaming Platform</span>
+            <span className="font-bold text-lg md:text-xl truncate">Gaming Hub</span>
           </div>
 
           {/* Desktop Menu */}
@@ -178,7 +178,7 @@ export default function Home() {
               Play Games, Earn Rewards
             </h1>
             <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8">
-              Join our gaming platform and compete with players worldwide. Win games, earn energy core, and climb the leaderboard!
+              Join our Gaming Hub and compete with players worldwide. Win games, earn energy core, and climb the leaderboard!
             </p>
             {!isAuthenticated ? (
               <Button
@@ -264,7 +264,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Play with friends and compete in real-time multiplayer games like UNO
+                  Play with friends and compete in multiplayer games like UNO
                 </p>
               </CardContent>
             </Card>
@@ -299,9 +299,10 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t bg-background/95 py-8 md:py-12 mt-12 md:mt-20">
         <div className="container mx-auto px-4 text-center text-sm md:text-base text-muted-foreground">
-          <p>&copy; 2026 Gaming Platform. All rights reserved.</p>
+          <p>&copy; 2026 Gaming Hub. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
 }
+

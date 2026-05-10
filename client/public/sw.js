@@ -1,4 +1,4 @@
-// Service Worker for Gaming Platform
+// Service Worker for Gaming Hub
 const CACHE_NAME = 'gaming-platform-v1';
 const RUNTIME_CACHE = 'gaming-platform-runtime';
 const GAME_CACHE = 'gaming-platform-games';
@@ -163,7 +163,7 @@ self.addEventListener('push', (event) => {
   };
   
   event.waitUntil(
-    self.registration.showNotification('Gaming Platform', options)
+    self.registration.showNotification('Gaming Hub', options)
   );
 });
 
@@ -187,3 +187,4 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+

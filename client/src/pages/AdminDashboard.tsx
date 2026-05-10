@@ -307,7 +307,7 @@ export default function AdminDashboard() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Platform Name</label>
-                <Input value="Gaming Platform" className="bg-slate-700 border-slate-600 text-white" />
+                <Input value="Gaming Hub" className="bg-slate-700 border-slate-600 text-white" />
               </div>
 
               <div className="space-y-2">
@@ -414,3 +414,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

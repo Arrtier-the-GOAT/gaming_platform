@@ -28,7 +28,7 @@ export function PWAPrompt() {
     try {
       await installApp();
       setShowInstallPrompt(false);
-      toast.success('Gaming Platform installed! You can now access it from your home screen.');
+      toast.success('Gaming Hub installed! You can now access it from your home screen.');
     } catch (error) {
       console.error('Installation failed:', error);
       toast.error('Installation failed. Please try again.');
@@ -44,7 +44,7 @@ export function PWAPrompt() {
             <div className="flex items-start gap-3">
               <Download className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold">Install Gaming Platform</h3>
+                <h3 className="font-semibold">Install Gaming Hub</h3>
                 <p className="text-sm text-blue-100 mt-1">
                   Install our app on your device for quick access and offline play!
                 </p>
@@ -97,3 +97,4 @@ export function PWAPrompt() {
     </>
   );
 }
+

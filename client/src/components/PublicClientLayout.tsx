@@ -1,24 +1,48 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Gamepad2, Menu, X, LogOut } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Link, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { getLoginUrl } from "@/const";
+
+const MAIN_NAV_LINKS = [
+  { to: "/games", label: "Games" },
+  { to: "/shop", label: "Shop" },
+  { to: "/leaderboard", label: "Leaderboard" },
+  { to: "/premium", label: "Premium" },
+  { to: "/events", label: "Events" },
+];
+
+const MOBILE_EXTRA_LINKS = [
+  { to: "/daily-tasks", label: "Daily Tasks" },
+  { to: "/achievements", label: "Achievements" },
+];
 
 export default function PublicClientLayout({ children }: { children?: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const logoutMutation = trpc.auth.logout.useMutation();
+  const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  const handleLogout = useCallback(async () => {
     try {
       await logoutMutation.mutateAsync();
-      window.location.href = "/";
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
-  };
+  }, [logoutMutation, navigate]);
+
+  const getDesktopNavClassName = useCallback(({ isActive }: { isActive: boolean }) => `text-sm transition ${isActive ? "text-primary font-semibold" : "text-foreground/80 hover:text-primary"}`, []);
+
+  const getMobileNavClassName = useCallback(
+    ({ isActive }: { isActive: boolean }) => `block py-3 px-4 rounded-lg transition text-base font-medium ${isActive ? "bg-primary/10 text-primary" : "hover:bg-primary/5"}`,
+    []
+  );
+
   return (
     <div className="">
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -32,21 +56,11 @@ export default function PublicClientLayout({ children }: { children?: ReactNode 
           <div className="hidden md:flex gap-6 items-center">
             {isAuthenticated && (
               <>
-                <Link to="/games" className="text-sm hover:text-primary transition">
-                  Games
-                </Link>
-                <Link to="/shop" className="text-sm hover:text-primary transition">
-                  Shop
-                </Link>
-                <Link to="/leaderboard" className="text-sm hover:text-primary transition">
-                  Leaderboard
-                </Link>
-                <Link to="/premium" className="text-sm hover:text-primary transition">
-                  Premium
-                </Link>
-                <Link to="/events" className="text-sm hover:text-primary transition">
-                  Events
-                </Link>
+                {MAIN_NAV_LINKS.map(link => (
+                  <NavLink key={link.to} to={link.to} className={getDesktopNavClassName}>
+                    {link.label}
+                  </NavLink>
+                ))}
               </>
             )}
             {isAuthenticated ? (
@@ -69,14 +83,14 @@ export default function PublicClientLayout({ children }: { children?: ReactNode 
                 </Button>
               </>
             ) : (
-              <Button onClick={() => (window.location.href = getLoginUrl())} size="sm">
-                Sign In
+              <Button asChild size="sm">
+                <Link to={getLoginUrl()}>Sign In</Link>
               </Button>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 hover:bg-accent rounded-lg transition flex-shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button className="md:hidden p-2 hover:bg-primary/10 rounded-lg transition flex-shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -86,39 +100,28 @@ export default function PublicClientLayout({ children }: { children?: ReactNode 
           <div className="md:hidden border-t bg-background/98 px-4 py-4 space-y-3">
             {isAuthenticated && (
               <>
-                <Link to="/games" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Games
-                </Link>
-                <Link to="/shop" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Shop
-                </Link>
-                <Link to="/leaderboard" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Leaderboard
-                </Link>
-                <Link to="/premium" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Premium
-                </Link>
-                <Link to="/events" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Events
-                </Link>
-                <Link to="/daily-tasks" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Daily Tasks
-                </Link>
-                <Link to="/achievements" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
-                  Achievements
-                </Link>
+                {MAIN_NAV_LINKS.map(link => (
+                  <NavLink key={link.to} to={link.to} className={getMobileNavClassName} onClick={closeMobileMenu}>
+                    {link.label}
+                  </NavLink>
+                ))}
+                {MOBILE_EXTRA_LINKS.map(link => (
+                  <NavLink key={link.to} to={link.to} className={getMobileNavClassName} onClick={closeMobileMenu}>
+                    {link.label}
+                  </NavLink>
+                ))}
                 <hr className="my-2" />
               </>
             )}
             {isAuthenticated ? (
               <>
-                <Link to="/profile" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-medium">
+                <NavLink to="/profile" className={getMobileNavClassName} onClick={closeMobileMenu}>
                   Profile
-                </Link>
+                </NavLink>
                 {user?.role === "admin" && (
-                  <Link to="/admin" className="block py-3 px-4 hover:bg-accent rounded-lg transition text-base font-semibold text-blue-600">
+                  <NavLink to="/admin" className="block py-3 px-4 rounded-lg transition text-base font-semibold text-primary hover:bg-primary/5" onClick={closeMobileMenu}>
                     Admin Dashboard
-                  </Link>
+                  </NavLink>
                 )}
                 <Button
                   variant="outline"
@@ -133,8 +136,8 @@ export default function PublicClientLayout({ children }: { children?: ReactNode 
                 </Button>
               </>
             ) : (
-              <Button onClick={() => (window.location.href = getLoginUrl())} className="w-full h-10 text-base">
-                Sign In
+              <Button asChild className="w-full h-10 text-base" onClick={closeMobileMenu}>
+                <Link to={getLoginUrl()}>Sign In</Link>
               </Button>
             )}
           </div>

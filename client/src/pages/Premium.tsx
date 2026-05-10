@@ -15,9 +15,9 @@ const PREMIUM_PLANS = [
   {
     id: 1,
     duration: "1 Month",
-    description: "Try premium features",
-    price: 10000,
-    pricePerDay: 333,
+    description: "Starter premium package",
+    price: 20000,
+    pricePerDay: 667,
     features: [
       "2x leaderboard points",
       "Exclusive rewards",
@@ -25,16 +25,18 @@ const PREMIUM_PLANS = [
       "Ad-free experience",
       "Bonus rewards",
       "Early access to new games",
-      "Weekly rewards for top 3 players",
+      "Shop Redeem access",
+      "Weekly Prize 30,000 MMK for leaderboard top 1 player",
+      "MCGG MLBB match winner prize x0.5",
     ],
     popular: false,
   },
   {
     id: 2,
     duration: "3 Months",
-    description: "Best value",
-    price: 30000,
-    pricePerDay: 333,
+    description: "Best value package",
+    price: 50000,
+    pricePerDay: 556,
     features: [
       "2x leaderboard points",
       "Exclusive rewards",
@@ -44,16 +46,18 @@ const PREMIUM_PLANS = [
       "Early access to new games",
       "Monthly bonus rewards",
       "Custom profile badge",
-      "Weekly rewards for top 3 players",
+      "Shop Redeem access",
+      "Weekly Prize 35,000 MMK for leaderboard top 1 player",
+      "MCGG MLBB match winner prize x2",
     ],
     popular: false,
   },
   {
     id: 3,
     duration: "5 Months",
-    description: "Best savings",
-    price: 70000,
-    pricePerDay: 467,
+    description: "Maximum rewards package",
+    price: 130000,
+    pricePerDay: 867,
     features: [
       "3x leaderboard points",
       "VIP status",
@@ -64,7 +68,9 @@ const PREMIUM_PLANS = [
       "Monthly bonus rewards",
       "Custom profile badge",
       "20% discount on next purchase",
-      "Weekly rewards for top 3 players",
+      "Shop Redeem access",
+      "Weekly Prize 40,000 MMK for leaderboard top 1 player",
+      "MCGG MLBB match winner prize x3",
     ],
     popular: true,
   },
@@ -269,90 +275,97 @@ export default function Premium() {
         </div>
 
         {/* FAQ Section */}
-        <div className="bg-gray-50 rounded-lg p-8 space-y-6">
-          <h2 className="text-2xl font-bold">Frequently Asked Questions</h2>
+        <section className="rounded-xl border border-primary/20 bg-card p-5 md:p-8 space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl md:text-3xl font-bold">Frequently Asked Questions</h2>
+            <p className="text-sm text-muted-foreground">
+              Common answers about premium plans, upgrades, and billing.
+            </p>
+          </div>
 
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">Can I cancel my subscription anytime?</h3>
-              <p className="text-muted-foreground">
-                Yes, you can cancel your subscription at any time. Your premium benefits will remain active until the end of your billing period.
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <h3 className="font-semibold">Can I cancel my subscription anytime?</h3>
+              <p className="text-sm text-muted-foreground">
+                Yes. Premium stays active until your current billing period ends.
               </p>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-2">What happens when my subscription expires?</h3>
-              <p className="text-muted-foreground">
-                Your account will revert to free tier. You'll still have access to all your games and data, but premium benefits will be disabled.
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <h3 className="font-semibold">What happens when my subscription expires?</h3>
+              <p className="text-sm text-muted-foreground">
+                Your account returns to free tier and premium benefits are disabled.
               </p>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-2">Can I upgrade my plan?</h3>
-              <p className="text-muted-foreground">
-                Yes! You can upgrade to a longer plan at any time. The difference will be calculated and applied to your account.
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <h3 className="font-semibold">Can I upgrade my plan?</h3>
+              <p className="text-sm text-muted-foreground">
+                Yes. You can upgrade anytime and the plan change is applied to your account.
               </p>
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-2">Do I get a refund if I cancel?</h3>
-              <p className="text-muted-foreground">
-                Refunds are not available for used subscription time. However, you can continue using premium features until your billing period ends.
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <h3 className="font-semibold">Do I get a refund if I cancel?</h3>
+              <p className="text-sm text-muted-foreground">
+                Refunds are not available for used subscription time.
               </p>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Payment Modal */}
         {showPaymentModal && selectedPlanForPayment && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-              <div className="p-6 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Payment Details</h2>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-primary/20 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 md:p-7 space-y-6">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">Premium Checkout</p>
+                  <h2 className="text-2xl font-bold">Payment Details</h2>
+                  <p className="text-sm text-muted-foreground">Complete the steps below to activate your premium plan.</p>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Plan</p>
-                    <p className="text-lg font-semibold">{selectedPlanForPayment.duration}</p>
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">Selected Plan</p>
+                    <p className="font-semibold">{selectedPlanForPayment.duration}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Amount</p>
-                    <p className="text-2xl font-bold text-purple-600">{selectedPlanForPayment.price.toLocaleString()} MMK</p>
+                  <div className="flex items-end justify-between">
+                    <p className="text-sm text-muted-foreground">Amount to Pay</p>
+                    <p className="text-3xl font-bold text-primary">{selectedPlanForPayment.price.toLocaleString()} MMK</p>
                   </div>
                 </div>
 
                 {!paymentConfirmed ? (
                   <>
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
-                      <h3 className="font-semibold text-purple-900">Send Payment To:</h3>
+                    <div className="rounded-lg border border-primary/20 p-4 space-y-4">
+                      <h3 className="font-semibold">Step 1: Send Payment To</h3>
                       <div className="space-y-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Name</p>
-                          <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
+                        <div className="rounded-md border border-primary/15 p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Account Name</p>
+                          <div className="flex items-center justify-between gap-2">
                             <p className="font-medium">{PAYMENT_DETAILS.name}</p>
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(PAYMENT_DETAILS.name);
                                 toast.success("Name copied!");
                               }}
-                              className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                              className="text-xs font-semibold text-primary hover:opacity-80"
                             >
                               Copy
                             </button>
                           </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Phone Number</p>
-                          <div className="flex items-center justify-between gap-2 bg-white p-2 rounded border">
+                        <div className="rounded-md border border-primary/15 p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Phone Number</p>
+                          <div className="flex items-center justify-between gap-2">
                             <p className="font-medium">{PAYMENT_DETAILS.phoneNumber}</p>
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(PAYMENT_DETAILS.phoneNumber);
                                 toast.success("Phone number copied!");
                               }}
-                              className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                              className="text-xs font-semibold text-primary hover:opacity-80"
                             >
                               Copy
                             </button>
@@ -361,9 +374,9 @@ export default function Premium() {
                       </div>
                     </div>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="text-xs text-yellow-800">
-                        📝 After payment, click "I've Sent Payment" to enter your transaction ID for verification.
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-xs text-muted-foreground">
+                        After transfer, click <span className="font-semibold text-foreground">I've Sent Payment</span> and enter your 5-digit transaction ID.
                       </p>
                     </div>
 
@@ -375,13 +388,13 @@ export default function Premium() {
                           setPaymentConfirmed(false);
                           setTransactionId("");
                         }}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                        className="flex-1 px-4 py-2.5 border border-primary/30 rounded-lg hover:bg-primary/5 font-medium"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => setPaymentConfirmed(true)}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                        className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 font-medium"
                       >
                         I've Sent Payment
                       </button>
@@ -389,16 +402,18 @@ export default function Premium() {
                   </>
                 ) : (
                   <>
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
-                      <h3 className="font-semibold text-green-900">Enter Transaction ID</h3>
-                      <p className="text-sm text-green-700">Please enter the 5-digit transaction ID from your bank transfer to verify the payment.</p>
+                    <div className="rounded-lg border border-primary/20 p-4 space-y-4">
+                      <h3 className="font-semibold">Step 2: Verify Transaction</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Enter the 5-digit transaction ID from your bank transfer.
+                      </p>
                       <input
                         type="text"
-                        placeholder="e.g., 12345"
+                        placeholder="12345"
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value.replace(/\D/g, '').slice(0, 5))}
                         maxLength={5}
-                        className="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-center text-2xl font-bold tracking-widest"
+                        className="w-full px-4 py-3 border border-primary/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-center text-2xl font-bold tracking-widest bg-background"
                       />
                     </div>
 
@@ -408,14 +423,14 @@ export default function Premium() {
                           setPaymentConfirmed(false);
                           setTransactionId("");
                         }}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                        className="flex-1 px-4 py-2.5 border border-primary/30 rounded-lg hover:bg-primary/5 font-medium"
                       >
                         Back
                       </button>
                       <button
                         onClick={handleConfirmPayment}
                         disabled={transactionId.length !== 5 || purchasePremium.isPending}
-                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {purchasePremium.isPending ? "Verifying..." : "Verify & Activate"}
                       </button>

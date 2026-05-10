@@ -36,6 +36,16 @@ import {
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const normalizeOwnerId = (value: string) => value.trim().replace(/^"|"$/g, "");
+const isOwnerUser = (user: { id: number; openId: string }) => {
+  const ownerId = normalizeOwnerId(ENV.ownerOpenId || "");
+  if (!ownerId) return false;
+
+  const numericId = String(user.id);
+  const paddedNumericId = numericId.padStart(12, "0");
+
+  return user.openId === ownerId || numericId === ownerId || paddedNumericId === ownerId;
+};
 
 const ensureLocalAuthTable = async (db: NonNullable<Awaited<ReturnType<typeof getDb>>>) => {
   await db.execute(sql`
@@ -128,7 +138,7 @@ export const appRouter = router({
             referredBy: referrer?.referralCode,
             mykBalance: 100,
             lastSignedIn: new Date(),
-            role: openId === ENV.ownerOpenId ? "admin" : "user",
+            role: openId === normalizeOwnerId(ENV.ownerOpenId || "") ? "admin" : "user",
           });
 
           userId = Number((createdUser as { insertId?: number }).insertId ?? 0);
@@ -138,6 +148,10 @@ export const appRouter = router({
               throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create user" });
             }
             userId = inserted[0].id;
+          }
+
+          if (isOwnerUser({ id: userId, openId })) {
+            await db.update(users).set({ role: "admin" }).where(eq(users.id, userId));
           }
 
           if (referrer) {
@@ -206,6 +220,11 @@ export const appRouter = router({
         const user = await db.select().from(users).where(eq(users.id, account[0].userId)).limit(1);
         if (!user[0]) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
+        }
+
+        if (isOwnerUser({ id: user[0].id, openId: user[0].openId }) && user[0].role !== "admin") {
+          await db.update(users).set({ role: "admin" }).where(eq(users.id, user[0].id));
+          user[0].role = "admin";
         }
 
         const sessionToken = await sdk.createSessionToken(user[0].openId, {
@@ -1229,7 +1248,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         // Only allow owner to promote admins
-        if (ctx.user.openId !== ENV.ownerOpenId) {
+        if (!isOwnerUser({ id: ctx.user.id, openId: ctx.user.openId })) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Only owner can promote admins" });
         }
 

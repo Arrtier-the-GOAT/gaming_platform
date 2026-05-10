@@ -27,6 +27,9 @@ import AdminEvents from "./pages/AdminEvents";
 import CandyCrush from '@/pages/games/CandyCrush';
 import BubbleShooter from '@/pages/games/BubbleShooter';
 import WordleClone from '@/pages/games/WordleClone';
+import GoldMiner from '@/pages/games/GoldMiner';
+import UnoCardGame from '@/pages/games/UnoCardGame';
+import MemoryMatch from '@/pages/games/MemoryMatch';
 import { PWAPrompt } from "./components/PWAPrompt";
 
 function Router() {
@@ -47,7 +50,11 @@ function Router() {
       {/* Game routes */}
       <Route path={"/play/candy-crush"} component={CandyCrush} />
       <Route path={"/play/bubble-shooter"} component={BubbleShooter} />
+      <Route path={"/play/bubble-pop"} component={BubbleShooter} />
       <Route path={"/play/wordle-clone"} component={WordleClone} />
+      <Route path={"/play/gold-miner"} component={GoldMiner} />
+      <Route path={"/play/uno-card-game"} component={UnoCardGame} />
+      <Route path={"/play/memory-match"} component={MemoryMatch} />
       
       {/* Admin routes */}
       <Route path={"/admin"} component={AdminDashboard} />

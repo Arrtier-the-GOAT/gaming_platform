@@ -1,13 +1,15 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 export default function Profile() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [, setLocation] = useLocation();
 
   const handleCopyUserId = () => {
     const userId = String(user?.id).padStart(12, '0');
@@ -19,6 +21,21 @@ export default function Profile() {
 
   return (
     <div className="container mx-auto py-8">
+      <div className="mb-4">
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (window.history.length > 1) {
+              window.history.back();
+              return;
+            }
+            setLocation("/");
+          }}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>My Profile</CardTitle>

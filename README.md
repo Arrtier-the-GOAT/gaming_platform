@@ -35,7 +35,7 @@
 Before starting, ensure you have the following installed:
 
 - **Node.js**: v22.13.0 or higher
-- **pnpm**: v9.0.0 or higher (package manager)
+- **npm**: v10.0.0 or higher (package manager)
 - **Git**: Latest version
 - **MySQL/TiDB**: Local database instance (optional - can use remote)
 
@@ -49,8 +49,8 @@ cd gaming_platform
 ### Step 2: Install Dependencies
 
 ```bash
-# Install all dependencies using pnpm
-pnpm install
+# Install all dependencies using npm
+npm install
 ```
 
 ### Step 3: Environment Configuration
@@ -106,17 +106,17 @@ Update `DATABASE_URL` in `.env.local` with your remote database connection strin
 
 ```bash
 # Generate migration files (if schema changes)
-pnpm drizzle-kit generate
+npx drizzle-kit generate
 
 # Apply migrations to database
-pnpm drizzle-kit migrate
+npx drizzle-kit migrate
 ```
 
 ### Step 6: Start Development Server
 
 ```bash
 # Start both frontend and backend dev servers
-pnpm dev
+npm run dev
 ```
 
 The application will be available at:
@@ -170,36 +170,36 @@ gaming_platform/
 
 ```bash
 # Run all tests
-pnpm test
+npm run test
 
 # Run tests in watch mode
-pnpm test:watch
+npx vitest
 
 # Run specific test file
-pnpm test server/auth.logout.test.ts
+npx vitest run server/auth.logout.test.ts
 ```
 
 ### Code Quality
 
 ```bash
 # Type checking
-pnpm type-check
+npm run check
 
 # Linting (if configured)
-pnpm lint
+npx eslint .
 
 # Format code
-pnpm format
+npm run format
 ```
 
 ### Building for Production
 
 ```bash
 # Build frontend and backend
-pnpm build
+npm run build
 
 # Preview production build
-pnpm preview
+npx vite preview
 ```
 
 ---
@@ -224,9 +224,9 @@ pnpm preview
 ### Adding New Tables
 
 1. **Define schema** in `drizzle/schema.ts`
-2. **Generate migration**: `pnpm drizzle-kit generate`
+2. **Generate migration**: `npx drizzle-kit generate`
 3. **Review migration** SQL in `drizzle/migrations/`
-4. **Apply migration**: `pnpm drizzle-kit migrate`
+4. **Apply migration**: `npx drizzle-kit migrate`
 
 ---
 
@@ -292,7 +292,7 @@ protectedProcedure
 
 ```bash
 # Enable debug output
-DEBUG=* pnpm dev
+DEBUG=* npm run dev
 ```
 
 ### Browser DevTools
@@ -332,7 +332,7 @@ mysql -u user -p -h localhost -e "SELECT 1;"
 lsof -ti:3000 | xargs kill -9
 
 # Use different port
-PORT=3001 pnpm dev
+PORT=3001 npm run dev
 ```
 
 ### Issue: Module Not Found
@@ -340,8 +340,8 @@ PORT=3001 pnpm dev
 **Solution**: Reinstall dependencies.
 
 ```bash
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 ### Issue: OAuth Login Not Working
@@ -373,8 +373,8 @@ pnpm install
 ### Deploy to Manus Platform
 
 ```bash
-# Create checkpoint
-pnpm webdev:checkpoint "Your checkpoint message"
+# Create checkpoint (if your environment provides this command)
+npx webdev checkpoint "Your checkpoint message"
 
 # Publish to production
 # Use Manus Management UI → Publish button

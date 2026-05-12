@@ -1,14 +1,14 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { getSessionCookieOptions } from "./core/cookies";
-import { sdk } from "./core/sdk";
-import { systemRouter } from "./core/systemRouter";
+﻿import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { getSessionCookieOptions } from "./core/utils/cookies";
+import { sdk } from "./core/auth/sdk";
+import { systemRouter } from "./core/trpc/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getDb, getUserByReferralCode } from "./db";
-import { hashPassword, verifyPassword } from "./core/password";
+import { getDb, getUserByReferralCode } from "./core/database/connection";
+import { hashPassword, verifyPassword } from "./core/utils/password";
 import { nanoid } from "nanoid";
-import { ENV } from "./core/env";
+import { ENV } from "./core/utils/env";
 import {
   ensureReferralSystemSchema,
   getCurrentReferralWeekWindow,
@@ -19,12 +19,12 @@ import {
   hashUserAgent,
   markReferralPremiumActivated,
   runWeeklyReferralSettlement,
-} from "./referralSystem";
-import { 
-  users, 
+} from "./modules/referral/service";
+import {
+  users,
   localAuthAccounts,
-  referrals, 
-  energyCoreTransactions, 
+  referrals,
+  energyCoreTransactions,
   premiumSubscriptions,
   shopItems,
   shopPurchases,
@@ -42,8 +42,8 @@ import {
   weeklyLeaderboardSnapshots,
   leaderboardSeasons,
   seasonalGameLeaderboardSnapshots,
-  seasonalReferrerLeaderboardSnapshots
-} from "../drizzle/schema";
+  seasonalReferrerLeaderboardSnapshots,
+} from "../migrations/schema";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -71,9 +71,7 @@ const ensureLocalAuthTable = async (db: NonNullable<Awaited<ReturnType<typeof ge
   `);
 };
 
-const generateUniqueReferralCode = async (
-  db: NonNullable<Awaited<ReturnType<typeof getDb>>>
-) => {
+const generateUniqueReferralCode = async (db: NonNullable<Awaited<ReturnType<typeof getDb>>>) => {
   for (let i = 0; i < 5; i++) {
     const code = nanoid(10).toUpperCase();
     const existing = await db.select({ id: users.id }).from(users).where(eq(users.referralCode, code)).limit(1);
@@ -92,16 +90,18 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 export const appRouter = router({
   system: systemRouter,
-  
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     register: publicProcedure
-      .input(z.object({
-        name: z.string().trim().min(2).max(100).optional(),
-        email: z.string().email(),
-        password: z.string().min(8).max(128),
-        referralCode: z.string().trim().min(3).max(20).optional(),
-      }))
+      .input(
+        z.object({
+          name: z.string().trim().min(2).max(100).optional(),
+          email: z.string().email(),
+          password: z.string().min(8).max(128),
+          referralCode: z.string().trim().min(3).max(20).optional(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -109,19 +109,13 @@ export const appRouter = router({
         await ensureReferralSystemSchema(db);
 
         const email = normalizeEmail(input.email);
-        const existingAccount = await db.select()
-          .from(localAuthAccounts)
-          .where(eq(localAuthAccounts.email, email))
-          .limit(1);
+        const existingAccount = await db.select().from(localAuthAccounts).where(eq(localAuthAccounts.email, email)).limit(1);
 
         if (existingAccount[0]) {
           throw new TRPCError({ code: "CONFLICT", message: "Email already registered" });
         }
 
-        const existingUser = await db.select()
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
+        const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
         let userId: number;
         let openId: string;
@@ -131,9 +125,7 @@ export const appRouter = router({
         } else {
           const signupIp = getRequestIp(ctx.req);
           const signupUserAgentHash = hashUserAgent(ctx.req.headers["user-agent"] as string | undefined);
-          const referrer = input.referralCode
-            ? await getUserByReferralCode(input.referralCode)
-            : undefined;
+          const referrer = input.referralCode ? await getUserByReferralCode(input.referralCode) : undefined;
 
           if (input.referralCode && !referrer) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid referral code" });
@@ -175,11 +167,7 @@ export const appRouter = router({
           }
 
           if (referrer) {
-            const suspicious =
-              !!signupIp &&
-              !!referrer.signupIp &&
-              signupIp === referrer.signupIp &&
-              signupUserAgentHash === referrer.signupUserAgentHash;
+            const suspicious = !!signupIp && !!referrer.signupIp && signupIp === referrer.signupIp && signupUserAgentHash === referrer.signupUserAgentHash;
 
             await db.insert(referrals).values({
               referrerId: referrer.id,
@@ -209,20 +197,19 @@ export const appRouter = router({
         return { success: true } as const;
       }),
     login: publicProcedure
-      .input(z.object({
-        email: z.string().email(),
-        password: z.string().min(8).max(128),
-      }))
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(8).max(128),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await ensureLocalAuthTable(db);
 
         const email = normalizeEmail(input.email);
-        const account = await db.select()
-          .from(localAuthAccounts)
-          .where(eq(localAuthAccounts.email, email))
-          .limit(1);
+        const account = await db.select().from(localAuthAccounts).where(eq(localAuthAccounts.email, email)).limit(1);
 
         if (!account[0]) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
@@ -266,22 +253,25 @@ export const appRouter = router({
     getProfile: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      
+
       const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
       return user[0] || null;
     }),
 
     updateProfile: protectedProcedure
-      .input(z.object({
-        name: z.string().optional(),
-        email: z.string().email().optional(),
-        phone: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          name: z.string().optional(),
+          email: z.string().email().optional(),
+          phone: z.string().optional(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(users)
+        await db
+          .update(users)
           .set({
             name: input.name,
             email: input.email,
@@ -315,7 +305,7 @@ export const appRouter = router({
 
       const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
       const userData = user[0];
-      
+
       return {
         isPremium: userData?.isPremium || false,
         expiresAt: userData?.premiumExpiresAt || null,
@@ -326,9 +316,11 @@ export const appRouter = router({
   // Referral system
   referral: router({
     signUpWithReferral: publicProcedure
-      .input(z.object({
-        referralCode: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          referralCode: z.string().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -365,18 +357,14 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(energyCorePackages)
-        .where(eq(energyCorePackages.isActive, true));
+      return await db.select().from(energyCorePackages).where(eq(energyCorePackages.isActive, true));
     }),
 
     getTransactionHistory: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(energyCoreTransactions)
-        .where(eq(energyCoreTransactions.userId, ctx.user.id))
-        .orderBy(desc(energyCoreTransactions.createdAt))
-        .limit(50);
+      return await db.select().from(energyCoreTransactions).where(eq(energyCoreTransactions.userId, ctx.user.id)).orderBy(desc(energyCoreTransactions.createdAt)).limit(50);
     }),
   }),
 
@@ -386,46 +374,42 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(shopItems)
-        .where(eq(shopItems.isActive, true));
+      return await db.select().from(shopItems).where(eq(shopItems.isActive, true));
     }),
 
-    getItemsByGame: publicProcedure
-      .input(z.object({ game: z.string() }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    getItemsByGame: publicProcedure.input(z.object({ game: z.string() })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        return await db.select().from(shopItems)
-          .where(and(
-            eq(shopItems.game, input.game),
-            eq(shopItems.isActive, true)
-          ));
-      }),
+      return await db
+        .select()
+        .from(shopItems)
+        .where(and(eq(shopItems.game, input.game), eq(shopItems.isActive, true)));
+    }),
 
     purchaseItem: protectedProcedure
-      .input(z.object({
-        shopItemId: z.number(),
-        gameId: z.string(),
-        inGameName: z.string(),
-        serverId: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          shopItemId: z.number(),
+          gameId: z.string(),
+          inGameName: z.string(),
+          serverId: z.string().optional(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
         // Get item details
-        const item = await db.select().from(shopItems)
-          .where(eq(shopItems.id, input.shopItemId)).limit(1);
-        
+        const item = await db.select().from(shopItems).where(eq(shopItems.id, input.shopItemId)).limit(1);
+
         if (!item[0]) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Item not found" });
         }
 
         // Get user balance
-        const user = await db.select().from(users)
-          .where(eq(users.id, ctx.user.id)).limit(1);
-        
+        const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+
         if (!user[0] || user[0].mykBalance < item[0].energyCorePrice) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Insufficient energy core" });
         }
@@ -442,7 +426,8 @@ export const appRouter = router({
         });
 
         // Deduct energy core
-        await db.update(users)
+        await db
+          .update(users)
           .set({ mykBalance: user[0].mykBalance - item[0].energyCorePrice })
           .where(eq(users.id, ctx.user.id));
 
@@ -461,20 +446,20 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(shopPurchases)
-        .where(eq(shopPurchases.userId, ctx.user.id))
-        .orderBy(desc(shopPurchases.createdAt));
+      return await db.select().from(shopPurchases).where(eq(shopPurchases.userId, ctx.user.id)).orderBy(desc(shopPurchases.createdAt));
     }),
 
     // Admin shop management
     createItem: adminProcedure
-      .input(z.object({
-        name: z.string(),
-        game: z.string(),
-        description: z.string().optional(),
-        energyCorePrice: z.number(),
-        category: z.string(),
-      }))
+      .input(
+        z.object({
+          name: z.string(),
+          game: z.string(),
+          description: z.string().optional(),
+          energyCorePrice: z.number(),
+          category: z.string(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -492,17 +477,20 @@ export const appRouter = router({
       }),
 
     updateItem: adminProcedure
-      .input(z.object({
-        id: z.number(),
-        name: z.string().optional(),
-        energyCorePrice: z.number().optional(),
-        isActive: z.boolean().optional(),
-      }))
+      .input(
+        z.object({
+          id: z.number(),
+          name: z.string().optional(),
+          energyCorePrice: z.number().optional(),
+          isActive: z.boolean().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(shopItems)
+        await db
+          .update(shopItems)
           .set({
             name: input.name,
             energyCorePrice: input.energyCorePrice,
@@ -514,62 +502,51 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    deleteItem: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    deleteItem: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(shopItems)
-          .set({ isActive: false })
-          .where(eq(shopItems.id, input.id));
+      await db.update(shopItems).set({ isActive: false }).where(eq(shopItems.id, input.id));
 
-        return { success: true };
-      }),
+      return { success: true };
+    }),
   }),
 
   // Leaderboard
   leaderboard: router({
-    getTopPlayers: publicProcedure
-      .input(z.object({ limit: z.number().default(100) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    getTopPlayers: publicProcedure.input(z.object({ limit: z.number().default(100) })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const leaderboard = await db.select().from(leaderboardPoints)
-          .orderBy(desc(leaderboardPoints.totalPoints))
-          .limit(input.limit);
+      const leaderboard = await db.select().from(leaderboardPoints).orderBy(desc(leaderboardPoints.totalPoints)).limit(input.limit);
 
-        // Get user details for each leaderboard entry
-        const result = await Promise.all(
-          leaderboard.map(async (entry) => {
-            const user = await db.select().from(users)
-              .where(eq(users.id, entry.userId)).limit(1);
-            return {
-              ...entry,
-              userName: user[0]?.name || "Unknown",
-              userEmail: user[0]?.email,
-            };
-          })
-        );
+      // Get user details for each leaderboard entry
+      const result = await Promise.all(
+        leaderboard.map(async entry => {
+          const user = await db.select().from(users).where(eq(users.id, entry.userId)).limit(1);
+          return {
+            ...entry,
+            userName: user[0]?.name || "Unknown",
+            userEmail: user[0]?.email,
+          };
+        })
+      );
 
-        return result;
-      }),
+      return result;
+    }),
 
     getRewards: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(leaderboardRewards)
-        .orderBy(leaderboardRewards.position);
+      return await db.select().from(leaderboardRewards).orderBy(leaderboardRewards.position);
     }),
 
     getUserRank: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const leaderboard = await db.select().from(leaderboardPoints)
-        .orderBy(desc(leaderboardPoints.totalPoints));
+      const leaderboard = await db.select().from(leaderboardPoints).orderBy(desc(leaderboardPoints.totalPoints));
 
       const rank = leaderboard.findIndex(entry => entry.userId === ctx.user.id) + 1;
       const userEntry = leaderboard.find(entry => entry.userId === ctx.user.id);
@@ -581,14 +558,12 @@ export const appRouter = router({
       };
     }),
 
-    getTopReferrers: publicProcedure
-      .input(z.object({ limit: z.number().default(100) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        const currentWeek = getCurrentReferralWeekWindow();
-        return getReferralLeaderboardForWindow(db, currentWeek, input.limit);
-      }),
+    getTopReferrers: publicProcedure.input(z.object({ limit: z.number().default(100) })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const currentWeek = getCurrentReferralWeekWindow();
+      return getReferralLeaderboardForWindow(db, currentWeek, input.limit);
+    }),
 
     getReferrerRank: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
@@ -607,105 +582,97 @@ export const appRouter = router({
       };
     }),
 
-    getWeeklyRewardHistory: publicProcedure
-      .input(z.object({ limit: z.number().default(10) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        return getWeeklyReferralRewardHistory(db, input.limit);
-      }),
+    getWeeklyRewardHistory: publicProcedure.input(z.object({ limit: z.number().default(10) })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return getWeeklyReferralRewardHistory(db, input.limit);
+    }),
 
     // Season management
     getCurrentSeason: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const season = await db.select().from(leaderboardSeasons)
-        .where(eq(leaderboardSeasons.isActive, true))
-        .limit(1);
-      
+      const season = await db.select().from(leaderboardSeasons).where(eq(leaderboardSeasons.isActive, true)).limit(1);
+
       return season[0] || null;
     }),
 
-    getAllSeasons: publicProcedure
-      .input(z.object({ limit: z.number().default(50) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    getAllSeasons: publicProcedure.input(z.object({ limit: z.number().default(50) })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        return await db.select().from(leaderboardSeasons)
-          .orderBy(desc(leaderboardSeasons.seasonNumber))
-          .limit(input.limit);
-      }),
+      return await db.select().from(leaderboardSeasons).orderBy(desc(leaderboardSeasons.seasonNumber)).limit(input.limit);
+    }),
 
-    getGameLeaderboardForSeason: publicProcedure
-      .input(z.object({ seasonId: z.number(), limit: z.number().default(100) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    getGameLeaderboardForSeason: publicProcedure.input(z.object({ seasonId: z.number(), limit: z.number().default(100) })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const snapshots = await db.select().from(seasonalGameLeaderboardSnapshots)
-          .where(eq(seasonalGameLeaderboardSnapshots.seasonId, input.seasonId))
-          .orderBy(seasonalGameLeaderboardSnapshots.rank)
-          .limit(input.limit);
+      const snapshots = await db
+        .select()
+        .from(seasonalGameLeaderboardSnapshots)
+        .where(eq(seasonalGameLeaderboardSnapshots.seasonId, input.seasonId))
+        .orderBy(seasonalGameLeaderboardSnapshots.rank)
+        .limit(input.limit);
 
-        const result = await Promise.all(
-          snapshots.map(async (entry) => {
-            const user = await db.select().from(users)
-              .where(eq(users.id, entry.userId)).limit(1);
-            return {
-              ...entry,
-              userName: user[0]?.name || "Unknown",
-              userEmail: user[0]?.email,
-            };
-          })
-        );
+      const result = await Promise.all(
+        snapshots.map(async entry => {
+          const user = await db.select().from(users).where(eq(users.id, entry.userId)).limit(1);
+          return {
+            ...entry,
+            userName: user[0]?.name || "Unknown",
+            userEmail: user[0]?.email,
+          };
+        })
+      );
 
-        return result;
-      }),
+      return result;
+    }),
 
-    getReferrerLeaderboardForSeason: publicProcedure
-      .input(z.object({ seasonId: z.number(), limit: z.number().default(100) }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    getReferrerLeaderboardForSeason: publicProcedure.input(z.object({ seasonId: z.number(), limit: z.number().default(100) })).query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const snapshots = await db.select().from(seasonalReferrerLeaderboardSnapshots)
-          .where(eq(seasonalReferrerLeaderboardSnapshots.seasonId, input.seasonId))
-          .orderBy(seasonalReferrerLeaderboardSnapshots.rank)
-          .limit(input.limit);
+      const snapshots = await db
+        .select()
+        .from(seasonalReferrerLeaderboardSnapshots)
+        .where(eq(seasonalReferrerLeaderboardSnapshots.seasonId, input.seasonId))
+        .orderBy(seasonalReferrerLeaderboardSnapshots.rank)
+        .limit(input.limit);
 
-        const result = await Promise.all(
-          snapshots.map(async (entry) => {
-            const referrer = await db.select().from(users)
-              .where(eq(users.id, entry.referrerId)).limit(1);
-            return {
-              ...entry,
-              referrerName: referrer[0]?.name || "Unknown",
-              referrerEmail: referrer[0]?.email,
-            };
-          })
-        );
+      const result = await Promise.all(
+        snapshots.map(async entry => {
+          const referrer = await db.select().from(users).where(eq(users.id, entry.referrerId)).limit(1);
+          return {
+            ...entry,
+            referrerName: referrer[0]?.name || "Unknown",
+            referrerEmail: referrer[0]?.email,
+          };
+        })
+      );
 
-        return result;
-      }),
+      return result;
+    }),
 
     // Admin reward management
     setReward: adminProcedure
-      .input(z.object({
-        position: z.number(),
-        rewardAmount: z.number(),
-        description: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          position: z.number(),
+          rewardAmount: z.number(),
+          description: z.string().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const existing = await db.select().from(leaderboardRewards)
-          .where(eq(leaderboardRewards.position, input.position)).limit(1);
+        const existing = await db.select().from(leaderboardRewards).where(eq(leaderboardRewards.position, input.position)).limit(1);
 
         if (existing[0]) {
-          await db.update(leaderboardRewards)
+          await db
+            .update(leaderboardRewards)
             .set({
               rewardAmount: input.rewardAmount,
               description: input.description,
@@ -727,9 +694,11 @@ export const appRouter = router({
   // Premium subscription
   premium: router({
     getCheckoutQuote: protectedProcedure
-      .input(z.object({
-        durationMonths: z.number(),
-      }))
+      .input(
+        z.object({
+          durationMonths: z.number(),
+        })
+      )
       .query(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -753,16 +722,14 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(premiumSubscriptions)
-        .orderBy(premiumSubscriptions.durationMonths);
+      return await db.select().from(premiumSubscriptions).orderBy(premiumSubscriptions.durationMonths);
     }),
 
     getUserStatus: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const user = await db.select().from(users)
-        .where(eq(users.id, ctx.user.id)).limit(1);
+      const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
       return {
         isPremium: user[0]?.isPremium || false,
@@ -771,11 +738,13 @@ export const appRouter = router({
     }),
 
     purchasePremium: protectedProcedure
-      .input(z.object({
-        durationMonths: z.number(),
-        paymentMethod: z.enum(["kbz_pay", "aya_pay", "uab_pay"]),
-        transactionId: z.string().regex(/^\d{5}$/, "Transaction ID must be exactly 5 digits"),
-      }))
+      .input(
+        z.object({
+          durationMonths: z.number(),
+          paymentMethod: z.enum(["kbz_pay", "aya_pay", "uab_pay"]),
+          transactionId: z.string().regex(/^\d{5}$/, "Transaction ID must be exactly 5 digits"),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -786,13 +755,10 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid transaction ID format" });
         }
 
-        const [pendingRequest] = await db.select()
+        const [pendingRequest] = await db
+          .select()
           .from(paymentTransactions)
-          .where(and(
-            eq(paymentTransactions.userId, ctx.user.id),
-            eq(paymentTransactions.type, "premium"),
-            eq(paymentTransactions.status, "pending")
-          ))
+          .where(and(eq(paymentTransactions.userId, ctx.user.id), eq(paymentTransactions.type, "premium"), eq(paymentTransactions.status, "pending")))
           .limit(1);
 
         if (pendingRequest) {
@@ -832,19 +798,21 @@ export const appRouter = router({
 
     // Admin premium pricing management
     updatePremiumPrice: adminProcedure
-      .input(z.object({
-        durationMonths: z.number(),
-        priceMMK: z.number(),
-      }))
+      .input(
+        z.object({
+          durationMonths: z.number(),
+          priceMMK: z.number(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const existing = await db.select().from(premiumSubscriptions)
-          .where(eq(premiumSubscriptions.durationMonths, input.durationMonths)).limit(1);
+        const existing = await db.select().from(premiumSubscriptions).where(eq(premiumSubscriptions.durationMonths, input.durationMonths)).limit(1);
 
         if (existing[0]) {
-          await db.update(premiumSubscriptions)
+          await db
+            .update(premiumSubscriptions)
             .set({
               priceMMK: input.priceMMK,
               updatedAt: new Date(),
@@ -872,8 +840,7 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(dailyTasks)
-        .orderBy(dailyTasks.day);
+      return await db.select().from(dailyTasks).orderBy(dailyTasks.day);
     }),
 
     getUserProgress: protectedProcedure.query(async ({ ctx }) => {
@@ -883,74 +850,67 @@ export const appRouter = router({
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      return await db.select().from(userDailyTaskProgress)
-        .where(and(
-          eq(userDailyTaskProgress.userId, ctx.user.id),
-          gte(userDailyTaskProgress.date, today)
-        ));
+      return await db
+        .select()
+        .from(userDailyTaskProgress)
+        .where(and(eq(userDailyTaskProgress.userId, ctx.user.id), gte(userDailyTaskProgress.date, today)));
     }),
 
-    completeTask: protectedProcedure
-      .input(z.object({ taskId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    completeTask: protectedProcedure.input(z.object({ taskId: z.number() })).mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const task = await db.select().from(dailyTasks)
-          .where(eq(dailyTasks.id, input.taskId)).limit(1);
+      const task = await db.select().from(dailyTasks).where(eq(dailyTasks.id, input.taskId)).limit(1);
 
-        if (!task[0]) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
-        }
+      if (!task[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
+      }
 
-        // Check if already completed today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+      // Check if already completed today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-        const existing = await db.select().from(userDailyTaskProgress)
-          .where(and(
-            eq(userDailyTaskProgress.userId, ctx.user.id),
-            eq(userDailyTaskProgress.taskId, input.taskId),
-            gte(userDailyTaskProgress.date, today)
-          )).limit(1);
+      const existing = await db
+        .select()
+        .from(userDailyTaskProgress)
+        .where(and(eq(userDailyTaskProgress.userId, ctx.user.id), eq(userDailyTaskProgress.taskId, input.taskId), gte(userDailyTaskProgress.date, today)))
+        .limit(1);
 
-        if (existing[0]?.completed) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Task already completed today" });
-        }
+      if (existing[0]?.completed) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Task already completed today" });
+      }
 
-        // Award energy core
-        const user = await db.select().from(users)
-          .where(eq(users.id, ctx.user.id)).limit(1);
+      // Award energy core
+      const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
-        await db.update(users)
-          .set({ mykBalance: (user[0]?.mykBalance || 0) + task[0].energyCoreReward })
-          .where(eq(users.id, ctx.user.id));
+      await db
+        .update(users)
+        .set({ mykBalance: (user[0]?.mykBalance || 0) + task[0].energyCoreReward })
+        .where(eq(users.id, ctx.user.id));
 
-        // Record transaction
-        await db.insert(energyCoreTransactions).values({
+      // Record transaction
+      await db.insert(energyCoreTransactions).values({
+        userId: ctx.user.id,
+        amount: task[0].energyCoreReward,
+        type: "daily_task",
+        description: `Daily task reward - Day ${task[0].day}`,
+      });
+
+      // Update progress
+      if (existing[0]) {
+        await db.update(userDailyTaskProgress).set({ completed: true, completedAt: new Date() }).where(eq(userDailyTaskProgress.id, existing[0].id));
+      } else {
+        await db.insert(userDailyTaskProgress).values({
           userId: ctx.user.id,
-          amount: task[0].energyCoreReward,
-          type: "daily_task",
-          description: `Daily task reward - Day ${task[0].day}`,
+          taskId: input.taskId,
+          completed: true,
+          completedAt: new Date(),
+          date: today,
         });
+      }
 
-        // Update progress
-        if (existing[0]) {
-          await db.update(userDailyTaskProgress)
-            .set({ completed: true, completedAt: new Date() })
-            .where(eq(userDailyTaskProgress.id, existing[0].id));
-        } else {
-          await db.insert(userDailyTaskProgress).values({
-            userId: ctx.user.id,
-            taskId: input.taskId,
-            completed: true,
-            completedAt: new Date(),
-            date: today,
-          });
-        }
-
-        return { success: true, rewardAmount: task[0].energyCoreReward };
-      }),
+      return { success: true, rewardAmount: task[0].energyCoreReward };
+    }),
   }),
 
   // Achievements
@@ -966,69 +926,65 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(userAchievements)
-        .where(eq(userAchievements.userId, ctx.user.id));
+      return await db.select().from(userAchievements).where(eq(userAchievements.userId, ctx.user.id));
     }),
 
-    claimReward: protectedProcedure
-      .input(z.object({ achievementId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    claimReward: protectedProcedure.input(z.object({ achievementId: z.number() })).mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const userAchievement = await db.select().from(userAchievements)
-          .where(and(
-            eq(userAchievements.userId, ctx.user.id),
-            eq(userAchievements.achievementId, input.achievementId)
-          )).limit(1);
+      const userAchievement = await db
+        .select()
+        .from(userAchievements)
+        .where(and(eq(userAchievements.userId, ctx.user.id), eq(userAchievements.achievementId, input.achievementId)))
+        .limit(1);
 
-        if (!userAchievement[0]) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Achievement not found" });
-        }
+      if (!userAchievement[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Achievement not found" });
+      }
 
-        if (userAchievement[0].rewardClaimed) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Reward already claimed" });
-        }
+      if (userAchievement[0].rewardClaimed) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Reward already claimed" });
+      }
 
-        const achievement = await db.select().from(achievements)
-          .where(eq(achievements.id, input.achievementId)).limit(1);
+      const achievement = await db.select().from(achievements).where(eq(achievements.id, input.achievementId)).limit(1);
 
-        if (!achievement[0]) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Achievement not found" });
-        }
+      if (!achievement[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Achievement not found" });
+      }
 
-        // Award energy core
-        const user = await db.select().from(users)
-          .where(eq(users.id, ctx.user.id)).limit(1);
+      // Award energy core
+      const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
-        await db.update(users)
-          .set({ mykBalance: (user[0]?.mykBalance || 0) + achievement[0].energyCoreReward })
-          .where(eq(users.id, ctx.user.id));
+      await db
+        .update(users)
+        .set({ mykBalance: (user[0]?.mykBalance || 0) + achievement[0].energyCoreReward })
+        .where(eq(users.id, ctx.user.id));
 
-        // Record transaction
-        await db.insert(energyCoreTransactions).values({
-          userId: ctx.user.id,
-          amount: achievement[0].energyCoreReward,
-          type: "achievement",
-          description: `Achievement reward: ${achievement[0].name}`,
-        });
+      // Record transaction
+      await db.insert(energyCoreTransactions).values({
+        userId: ctx.user.id,
+        amount: achievement[0].energyCoreReward,
+        type: "achievement",
+        description: `Achievement reward: ${achievement[0].name}`,
+      });
 
-        // Mark reward as claimed
-        await db.update(userAchievements)
-          .set({ rewardClaimed: true })
-          .where(eq(userAchievements.id, userAchievement[0].id));
+      // Mark reward as claimed
+      await db.update(userAchievements).set({ rewardClaimed: true }).where(eq(userAchievements.id, userAchievement[0].id));
 
-        return { success: true, rewardAmount: achievement[0].energyCoreReward };
-      }),
+      return { success: true, rewardAmount: achievement[0].energyCoreReward };
+    }),
 
     // Admin achievement management
     createAchievement: adminProcedure
-      .input(z.object({
-        name: z.string(),
-        description: z.string().optional(),
-        energyCoreReward: z.number(),
-        type: z.string(),
-      }))
+      .input(
+        z.object({
+          name: z.string(),
+          description: z.string().optional(),
+          energyCoreReward: z.number(),
+          type: z.string(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1044,16 +1000,19 @@ export const appRouter = router({
       }),
 
     updateAchievement: adminProcedure
-      .input(z.object({
-        id: z.number(),
-        energyCoreReward: z.number().optional(),
-        description: z.string().optional(),
-      }))
+      .input(
+        z.object({
+          id: z.number(),
+          energyCoreReward: z.number().optional(),
+          description: z.string().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(achievements)
+        await db
+          .update(achievements)
           .set({
             energyCoreReward: input.energyCoreReward,
             description: input.description,
@@ -1071,28 +1030,27 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(events)
-        .where(eq(events.isActive, true))
-        .orderBy(desc(events.startDate));
+      return await db.select().from(events).where(eq(events.isActive, true)).orderBy(desc(events.startDate));
     }),
 
     getAll: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      return await db.select().from(events)
-        .orderBy(desc(events.startDate));
+      return await db.select().from(events).orderBy(desc(events.startDate));
     }),
 
     // Admin event management
     createEvent: adminProcedure
-      .input(z.object({
-        title: z.string(),
-        description: z.string().optional(),
-        content: z.string().optional(),
-        startDate: z.date(),
-        endDate: z.date().optional(),
-      }))
+      .input(
+        z.object({
+          title: z.string(),
+          description: z.string().optional(),
+          content: z.string().optional(),
+          startDate: z.date(),
+          endDate: z.date().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1110,18 +1068,21 @@ export const appRouter = router({
       }),
 
     updateEvent: adminProcedure
-      .input(z.object({
-        id: z.number(),
-        title: z.string().optional(),
-        description: z.string().optional(),
-        content: z.string().optional(),
-        isActive: z.boolean().optional(),
-      }))
+      .input(
+        z.object({
+          id: z.number(),
+          title: z.string().optional(),
+          description: z.string().optional(),
+          content: z.string().optional(),
+          isActive: z.boolean().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(events)
+        await db
+          .update(events)
           .set({
             title: input.title,
             description: input.description,
@@ -1134,28 +1095,26 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    deleteEvent: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    deleteEvent: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(events)
-          .set({ isActive: false })
-          .where(eq(events.id, input.id));
+      await db.update(events).set({ isActive: false }).where(eq(events.id, input.id));
 
-        return { success: true };
-      }),
+      return { success: true };
+    }),
   }),
 
   // Game results and scoring
   game: router({
     recordResult: protectedProcedure
-      .input(z.object({
-        gameName: z.string(),
-        won: z.boolean(),
-        points: z.number().default(0),
-      }))
+      .input(
+        z.object({
+          gameName: z.string(),
+          won: z.boolean(),
+          points: z.number().default(0),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1165,11 +1124,11 @@ export const appRouter = router({
 
         // Check if user is premium and add bonus points
         if (input.won) {
-          const premiumSub = await db.select().from(premiumSubscriptions)
-            .where(and(
-              eq(premiumSubscriptions.userId, ctx.user.id),
-              gte(premiumSubscriptions.expiresAt, new Date())
-            )).limit(1);
+          const premiumSub = await db
+            .select()
+            .from(premiumSubscriptions)
+            .where(and(eq(premiumSubscriptions.userId, ctx.user.id), gte(premiumSubscriptions.expiresAt, new Date())))
+            .limit(1);
 
           if (premiumSub.length > 0) {
             leaderboardPointsReward += 2; // Premium bonus: +2 points (total 4)
@@ -1187,13 +1146,10 @@ export const appRouter = router({
         });
 
         // Award or deduct energy core
-        const user = await db.select().from(users)
-          .where(eq(users.id, ctx.user.id)).limit(1);
+        const user = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
         const newBalance = Math.max(0, (user[0]?.mykBalance || 0) + energyCoreReward);
-        await db.update(users)
-          .set({ mykBalance: newBalance })
-          .where(eq(users.id, ctx.user.id));
+        await db.update(users).set({ mykBalance: newBalance }).where(eq(users.id, ctx.user.id));
 
         await db.insert(energyCoreTransactions).values({
           userId: ctx.user.id,
@@ -1203,12 +1159,12 @@ export const appRouter = router({
         });
 
         // Update leaderboard
-        const leaderboard = await db.select().from(leaderboardPoints)
-          .where(eq(leaderboardPoints.userId, ctx.user.id)).limit(1);
+        const leaderboard = await db.select().from(leaderboardPoints).where(eq(leaderboardPoints.userId, ctx.user.id)).limit(1);
 
         if (leaderboard[0]) {
           const newTotalPoints = leaderboard[0].totalPoints + leaderboardPointsReward;
-          await db.update(leaderboardPoints)
+          await db
+            .update(leaderboardPoints)
             .set({
               totalPoints: newTotalPoints,
               gamesWon: input.won ? leaderboard[0].gamesWon + 1 : leaderboard[0].gamesWon,
@@ -1230,8 +1186,7 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const results = await db.select().from(gameResults)
-        .where(eq(gameResults.userId, ctx.user.id));
+      const results = await db.select().from(gameResults).where(eq(gameResults.userId, ctx.user.id));
 
       const totalGames = results.length;
       const gamesWon = results.filter(r => r.won).length;
@@ -1240,7 +1195,7 @@ export const appRouter = router({
       return {
         totalGames,
         gamesWon,
-        winRate: totalGames > 0 ? (gamesWon / totalGames * 100).toFixed(2) : "0",
+        winRate: totalGames > 0 ? ((gamesWon / totalGames) * 100).toFixed(2) : "0",
         totalEarned,
       };
     }),
@@ -1249,9 +1204,11 @@ export const appRouter = router({
   // Setup and owner-only operations
   setup: router({
     promoteToAdmin: protectedProcedure
-      .input(z.object({
-        email: z.string().email(),
-      }))
+      .input(
+        z.object({
+          email: z.string().email(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         // Only allow owner to promote admins
         if (!isOwnerUser({ id: ctx.user.id, openId: ctx.user.openId })) {
@@ -1262,17 +1219,14 @@ export const appRouter = router({
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
         // Find user by email
-        const targetUser = await db.select().from(users)
-          .where(eq(users.email, input.email)).limit(1);
+        const targetUser = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
 
         if (!targetUser[0]) {
           throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
         }
 
         // Promote to admin
-        await db.update(users)
-          .set({ role: "admin" })
-          .where(eq(users.id, targetUser[0].id));
+        await db.update(users).set({ role: "admin" }).where(eq(users.id, targetUser[0].id));
 
         return { success: true, userId: targetUser[0].id, email: targetUser[0].email };
       }),
@@ -1285,9 +1239,9 @@ export const appRouter = router({
       try {
         // Add mykBalance column if it doesn't exist
         await db.execute(sql`ALTER TABLE users ADD COLUMN mykBalance INT DEFAULT 0 NOT NULL`);
-        console.log("✅ mykBalance column added");
+        console.log("Γ£à mykBalance column added");
       } catch (e: any) {
-        console.log("ℹ️ Column might already exist or error:", e.message);
+        console.log("Γä╣∩╕Å Column might already exist or error:", e.message);
       }
 
       return { success: true, message: "Schema fix attempted" };
@@ -1320,33 +1274,34 @@ export const appRouter = router({
     }),
 
     updateUserRole: adminProcedure
-      .input(z.object({
-        userId: z.number(),
-        role: z.enum(["user", "admin"]),
-      }))
+      .input(
+        z.object({
+          userId: z.number(),
+          role: z.enum(["user", "admin"]),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(users)
-          .set({ role: input.role })
-          .where(eq(users.id, input.userId));
+        await db.update(users).set({ role: input.role }).where(eq(users.id, input.userId));
 
         return { success: true };
       }),
 
     adjustEnergyCore: adminProcedure
-      .input(z.object({
-        userId: z.number(),
-        amount: z.number(),
-        reason: z.string(),
-      }))
+      .input(
+        z.object({
+          userId: z.number(),
+          amount: z.number(),
+          reason: z.string(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        const user = await db.select().from(users)
-          .where(eq(users.id, input.userId)).limit(1);
+        const user = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
 
         if (!user[0]) {
           throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
@@ -1354,9 +1309,7 @@ export const appRouter = router({
 
         const newBalance = (user[0].mykBalance || 0) + input.amount;
 
-        await db.update(users)
-          .set({ mykBalance: newBalance })
-          .where(eq(users.id, input.userId));
+        await db.update(users).set({ mykBalance: newBalance }).where(eq(users.id, input.userId));
 
         await db.insert(energyCoreTransactions).values({
           userId: input.userId,
@@ -1373,15 +1326,11 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const pendingRequests = await db.select()
-        .from(paymentTransactions)
-        .where(eq(paymentTransactions.status, "pending"))
-        .orderBy(desc(paymentTransactions.createdAt));
+      const pendingRequests = await db.select().from(paymentTransactions).where(eq(paymentTransactions.status, "pending")).orderBy(desc(paymentTransactions.createdAt));
 
       const enriched = await Promise.all(
-        pendingRequests.map(async (req) => {
-          const user = await db.select().from(users)
-            .where(eq(users.id, req.userId)).limit(1);
+        pendingRequests.map(async req => {
+          const user = await db.select().from(users).where(eq(users.id, req.userId)).limit(1);
           return {
             ...req,
             userName: user[0]?.name || "Unknown",
@@ -1396,17 +1345,18 @@ export const appRouter = router({
 
     // Approve premium request
     approvePremiumRequest: adminProcedure
-      .input(z.object({
-        paymentTransactionId: z.number(),
-        durationMonths: z.number(),
-      }))
+      .input(
+        z.object({
+          paymentTransactionId: z.number(),
+          durationMonths: z.number(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await ensureReferralSystemSchema(db);
 
-        const paymentTx = await db.select().from(paymentTransactions)
-          .where(eq(paymentTransactions.id, input.paymentTransactionId)).limit(1);
+        const paymentTx = await db.select().from(paymentTransactions).where(eq(paymentTransactions.id, input.paymentTransactionId)).limit(1);
 
         if (!paymentTx[0]) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Payment transaction not found" });
@@ -1416,9 +1366,7 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "Request already processed" });
         }
 
-        await db.update(paymentTransactions)
-          .set({ status: "completed" })
-          .where(eq(paymentTransactions.id, input.paymentTransactionId));
+        await db.update(paymentTransactions).set({ status: "completed" }).where(eq(paymentTransactions.id, input.paymentTransactionId));
 
         const expiresAt = new Date();
         expiresAt.setMonth(expiresAt.getMonth() + (paymentTx[0].durationMonths || input.durationMonths));
@@ -1430,7 +1378,8 @@ export const appRouter = router({
           expiresAt,
         });
 
-        await db.update(users)
+        await db
+          .update(users)
           .set({
             isPremium: true,
             premiumExpiresAt: expiresAt,
@@ -1438,7 +1387,8 @@ export const appRouter = router({
           .where(eq(users.id, paymentTx[0].userId));
 
         if (paymentTx[0].referralId) {
-          await db.update(referrals)
+          await db
+            .update(referrals)
             .set({
               discountApplied: true,
               discountAmount: paymentTx[0].discountAmount || 0,
@@ -1459,16 +1409,16 @@ export const appRouter = router({
 
     // Reject premium request
     rejectPremiumRequest: adminProcedure
-      .input(z.object({
-        paymentTransactionId: z.number(),
-      }))
+      .input(
+        z.object({
+          paymentTransactionId: z.number(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.update(paymentTransactions)
-          .set({ status: "failed" })
-          .where(eq(paymentTransactions.id, input.paymentTransactionId));
+        await db.update(paymentTransactions).set({ status: "failed" }).where(eq(paymentTransactions.id, input.paymentTransactionId));
 
         return { success: true };
       }),
@@ -1482,13 +1432,15 @@ export const appRouter = router({
     }),
 
     createShopItem: adminProcedure
-      .input(z.object({
-        name: z.string(),
-        description: z.string(),
-        energyCorePrice: z.number(),
-        game: z.string(),
-        category: z.string(),
-      }))
+      .input(
+        z.object({
+          name: z.string(),
+          description: z.string(),
+          energyCorePrice: z.number(),
+          game: z.string(),
+          category: z.string(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1505,15 +1457,17 @@ export const appRouter = router({
       }),
 
     updateShopItem: adminProcedure
-      .input(z.object({
-        itemId: z.number(),
-        name: z.string().optional(),
-        description: z.string().optional(),
-        energyCorePrice: z.number().optional(),
-        game: z.string().optional(),
-        category: z.string().optional(),
-        isActive: z.boolean().optional(),
-      }))
+      .input(
+        z.object({
+          itemId: z.number(),
+          name: z.string().optional(),
+          description: z.string().optional(),
+          energyCorePrice: z.number().optional(),
+          game: z.string().optional(),
+          category: z.string().optional(),
+          isActive: z.boolean().optional(),
+        })
+      )
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -1526,24 +1480,19 @@ export const appRouter = router({
         if (input.category !== undefined) updateData.category = input.category;
         if (input.isActive !== undefined) updateData.isActive = input.isActive;
 
-        await db.update(shopItems)
-          .set(updateData)
-          .where(eq(shopItems.id, input.itemId));
+        await db.update(shopItems).set(updateData).where(eq(shopItems.id, input.itemId));
 
         return { success: true };
       }),
 
-    deleteShopItem: adminProcedure
-      .input(z.object({ itemId: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    deleteShopItem: adminProcedure.input(z.object({ itemId: z.number() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        await db.delete(shopItems)
-          .where(eq(shopItems.id, input.itemId));
+      await db.delete(shopItems).where(eq(shopItems.id, input.itemId));
 
-        return { success: true };
-      }),
+      return { success: true };
+    }),
   }),
 
   // Reward codes and weekly leaderboard
@@ -1555,9 +1504,7 @@ export const appRouter = router({
       const weekNumber = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1;
 
       // Get top 3 players
-      const topPlayers = await db.select().from(leaderboardPoints)
-        .orderBy(desc(leaderboardPoints.totalPoints))
-        .limit(3);
+      const topPlayers = await db.select().from(leaderboardPoints).orderBy(desc(leaderboardPoints.totalPoints)).limit(3);
 
       if (topPlayers.length < 3) {
         throw new TRPCError({
@@ -1599,9 +1546,7 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const codes = await db.select().from(rewardCodes)
-        .where(eq(rewardCodes.userId, ctx.user.id))
-        .orderBy(desc(rewardCodes.createdAt));
+      const codes = await db.select().from(rewardCodes).where(eq(rewardCodes.userId, ctx.user.id)).orderBy(desc(rewardCodes.createdAt));
 
       return codes;
     }),
@@ -1610,11 +1555,13 @@ export const appRouter = router({
   // Notifications
   notification: router({
     sendAchievementNotification: protectedProcedure
-      .input(z.object({
-        title: z.string(),
-        message: z.string(),
-        achievementName: z.string(),
-      }))
+      .input(
+        z.object({
+          title: z.string(),
+          message: z.string(),
+          achievementName: z.string(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         // In a real app, you would send this to a push notification service
         // For now, we just log it and return success
@@ -1623,31 +1570,37 @@ export const appRouter = router({
       }),
 
     sendGameRewardNotification: protectedProcedure
-      .input(z.object({
-        gameName: z.string(),
-        rewardAmount: z.number(),
-        message: z.string(),
-      }))
+      .input(
+        z.object({
+          gameName: z.string(),
+          rewardAmount: z.number(),
+          message: z.string(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         console.log(`[Notification] Game reward for user ${ctx.user.id}:`, input);
         return { success: true, notificationId: Date.now() };
       }),
 
     sendPremiumNotification: protectedProcedure
-      .input(z.object({
-        title: z.string(),
-        message: z.string(),
-      }))
+      .input(
+        z.object({
+          title: z.string(),
+          message: z.string(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         console.log(`[Notification] Premium notification for user ${ctx.user.id}:`, input);
         return { success: true, notificationId: Date.now() };
       }),
 
     sendLeaderboardNotification: protectedProcedure
-      .input(z.object({
-        position: z.number(),
-        message: z.string(),
-      }))
+      .input(
+        z.object({
+          position: z.number(),
+          message: z.string(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
         console.log(`[Notification] Leaderboard notification for user ${ctx.user.id}:`, input);
         return { success: true, notificationId: Date.now() };

@@ -27,14 +27,14 @@ CREATE TABLE `referralWeeklyRewardPayouts` (
 );
 --> statement-breakpoint
 ALTER TABLE `energyCoreTransactions` MODIFY COLUMN `type` enum('initial','referral_bonus','weekly_referral_reward','game_win','game_loss','purchase','daily_task','achievement','admin_adjustment') NOT NULL;--> statement-breakpoint
-ALTER TABLE `paymentTransactions` ADD `originalAmount` int;--> statement-breakpoint
-ALTER TABLE `paymentTransactions` ADD `discountAmount` int DEFAULT 0 NOT NULL;--> statement-breakpoint
-ALTER TABLE `paymentTransactions` ADD `durationMonths` int DEFAULT 1 NOT NULL;--> statement-breakpoint
-ALTER TABLE `paymentTransactions` ADD `referralId` int;--> statement-breakpoint
-ALTER TABLE `referrals` ADD `suspicious` boolean DEFAULT false NOT NULL;--> statement-breakpoint
-ALTER TABLE `referrals` ADD `suspicionReason` varchar(255);--> statement-breakpoint
-ALTER TABLE `referrals` ADD `referredPremiumActivatedAt` timestamp;--> statement-breakpoint
-ALTER TABLE `referrals` ADD `discountApplied` boolean DEFAULT false NOT NULL;--> statement-breakpoint
-ALTER TABLE `referrals` ADD `discountAmount` int DEFAULT 0 NOT NULL;--> statement-breakpoint
-ALTER TABLE `users` ADD `signupIp` varchar(64);--> statement-breakpoint
-ALTER TABLE `users` ADD `signupUserAgentHash` varchar(64);
+ALTER TABLE `paymentTransactions` ADD COLUMN IF NOT EXISTS `originalAmount` int;--> statement-breakpoint
+ALTER TABLE `paymentTransactions` ADD COLUMN IF NOT EXISTS `discountAmount` int DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE `paymentTransactions` ADD COLUMN IF NOT EXISTS `durationMonths` int DEFAULT 1 NOT NULL;--> statement-breakpoint
+ALTER TABLE `paymentTransactions` ADD COLUMN IF NOT EXISTS `referralId` int;--> statement-breakpoint
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `suspicious` boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `suspicionReason` varchar(255);--> statement-breakpoint
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `referredPremiumActivatedAt` timestamp;--> statement-breakpoint
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `discountApplied` boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE `referrals` ADD COLUMN IF NOT EXISTS `discountAmount` int DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `signupIp` varchar(64);--> statement-breakpoint
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `signupUserAgentHash` varchar(64);

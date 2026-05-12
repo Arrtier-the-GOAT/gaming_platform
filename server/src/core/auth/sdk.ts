@@ -3,9 +3,9 @@ import { ForbiddenError } from "@shared/_core/errors";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
-import type { User } from "../../drizzle/schema";
-import * as db from "../db";
-import { ENV } from "./env";
+import type { User } from "../../../migrations/schema";
+import { getUserByOpenId, upsertUser } from "../database/connection";
+import { ENV } from "../utils/env";
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
@@ -105,12 +105,12 @@ class SDKServer {
       throw ForbiddenError("Invalid session cookie");
     }
 
-    const user = await db.getUserByOpenId(session.openId);
+    const user = await getUserByOpenId(session.openId);
     if (!user) {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
+    await upsertUser({
       openId: user.openId,
       referralCode: user.referralCode,
       lastSignedIn: new Date(),

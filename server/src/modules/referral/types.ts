@@ -1,0 +1,1 @@
+// Referral-related type definitions

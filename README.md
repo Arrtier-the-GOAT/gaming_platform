@@ -22,9 +22,9 @@
 | Frontend | React 19 + Tailwind CSS 4 + TypeScript |
 | Backend | Express.js + tRPC |
 | Database | MySQL/TiDB |
-| Authentication | Manus OAuth |
-| Real-time | WebSocket support |
-| Deployment | Manus Platform |
+| Authentication | Local email/password session auth |
+| Real-time | None (no live updates) |
+| Deployment | Vite + Node |
 
 ---
 
@@ -63,19 +63,10 @@ DATABASE_URL=mysql://user:password@localhost:3306/gaming_platform
 
 # Authentication
 JWT_SECRET=your-jwt-secret-key-here
-VITE_APP_ID=your-manus-app-id
-OAUTH_SERVER_URL=https://api.manus.im
-VITE_OAUTH_PORTAL_URL=https://portal.manus.im
 
 # Owner Information
 OWNER_NAME=Your Name
 OWNER_OPEN_ID=your-open-id
-
-# Built-in APIs
-BUILT_IN_FORGE_API_URL=https://api.manus.im
-BUILT_IN_FORGE_API_KEY=your-api-key
-VITE_FRONTEND_FORGE_API_KEY=your-frontend-api-key
-VITE_FRONTEND_FORGE_API_URL=https://api.manus.im
 
 # Analytics (optional)
 VITE_ANALYTICS_ENDPOINT=https://analytics.example.com
@@ -151,12 +142,10 @@ gaming_platform/
 ├── server/                          # Express backend
 │   ├── routers.ts                   # tRPC procedures
 │   ├── db.ts                        # Database queries
-│   ├── auth.logout.test.ts          # Test examples
 │   └── _core/                       # Framework core
 ├── drizzle/                         # Database schema
 │   ├── schema.ts                    # Table definitions
 │   └── migrations/                  # Migration files
-├── storage/                         # S3 storage helpers
 ├── shared/                          # Shared types and constants
 ├── package.json                     # Project dependencies
 └── README.md                        # Project documentation
@@ -165,19 +154,6 @@ gaming_platform/
 ---
 
 ## Development Workflow
-
-### Running Tests
-
-```bash
-# Run all tests
-npm run test
-
-# Run tests in watch mode
-npx vitest
-
-# Run specific test file
-npx vitest run server/auth.logout.test.ts
-```
 
 ### Code Quality
 
@@ -262,14 +238,7 @@ await trpc.games.createScore.useMutation({
 
 ## Authentication
 
-### Manus OAuth Flow
-
-1. User clicks "Login" button
-2. Redirected to Manus OAuth portal
-3. User authenticates
-4. Callback to `/api/oauth/callback`
-5. Session cookie created
-6. User logged in
+Authentication uses local email/password login with secure session cookies.
 
 ### Protected Routes
 
@@ -298,7 +267,6 @@ DEBUG=* npm run dev
 ### Browser DevTools
 
 - **React DevTools**: Inspect component hierarchy
-- **Redux DevTools**: Monitor state changes
 - **Network Tab**: Monitor API calls
 - **Console**: View logs and errors
 
@@ -344,9 +312,9 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Issue: OAuth Login Not Working
+### Issue: Login Not Working
 
-**Solution**: Verify OAuth credentials in `.env.local` and check callback URL configuration.
+**Solution**: Verify email/password credentials and ensure server is running.
 
 ---
 
@@ -370,23 +338,27 @@ npm install
 
 ## Deployment
 
-### Deploy to Manus Platform
+### Local Development
 
 ```bash
-# Create checkpoint (if your environment provides this command)
-npx webdev checkpoint "Your checkpoint message"
-
-# Publish to production
-# Use Manus Management UI → Publish button
+npm run dev
 ```
 
-### Environment Variables for Production
+### Production Build
 
-Update production environment variables in Manus Management UI:
-- Database URL (production database)
-- API keys and secrets
-- OAuth configuration
-- Analytics endpoints
+```bash
+npm run build
+npm start
+```
+
+### Production Environment
+
+Ensure your production environment defines the same core variables as development:
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `OWNER_NAME`
+- `OWNER_OPEN_ID`
+- `PORT` (optional)
 
 ---
 
@@ -415,7 +387,6 @@ refactor: Refactor code
 
 ### Documentation
 
-- [Manus Platform Docs](https://docs.manus.im)
 - [React Documentation](https://react.dev)
 - [Tailwind CSS Docs](https://tailwindcss.com)
 - [tRPC Documentation](https://trpc.io)

@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, desc, and } from "drizzle-orm";
 import { getDb } from "./db";
 import { rewardCodes, weeklyLeaderboardSnapshots, leaderboardPoints, users } from "../drizzle/schema";
-import { protectedProcedure, router } from "./_core/trpc";
+import { protectedProcedure, router } from "./core/trpc";
 
 // Helper function to generate unique reward code
 function generateRewardCode(): string {

@@ -26,6 +26,8 @@ export const users = mysqlTable("users", {
   // Gaming platform fields
   referralCode: varchar("referralCode", { length: 20 }).unique().notNull(),
   referredBy: varchar("referredBy", { length: 20 }), // referral code of the person who referred this user
+  signupIp: varchar("signupIp", { length: 64 }),
+  signupUserAgentHash: varchar("signupUserAgentHash", { length: 64 }),
   mykBalance: int("mykBalance").default(0).notNull(), // Myanmar Kyat balance
   isPremium: boolean("isPremium").default(false).notNull(),
   premiumExpiresAt: timestamp("premiumExpiresAt"),
@@ -40,7 +42,7 @@ export type InsertUser = typeof users.$inferInsert;
 
 /**
  * Local email/password credentials.
- * Kept separate from users so OAuth-era user records can coexist.
+ * Kept separate from users so legacy or external login records can coexist.
  */
 export const localAuthAccounts = mysqlTable("localAuthAccounts", {
   id: int("id").autoincrement().primaryKey(),
@@ -64,6 +66,11 @@ export const referrals = mysqlTable("referrals", {
   referralCode: varchar("referralCode", { length: 20 }).notNull(),
   bonusAwarded: boolean("bonusAwarded").default(false).notNull(),
   bonusAwardedAt: timestamp("bonusAwardedAt"),
+  suspicious: boolean("suspicious").default(false).notNull(),
+  suspicionReason: varchar("suspicionReason", { length: 255 }),
+  referredPremiumActivatedAt: timestamp("referredPremiumActivatedAt"),
+  discountApplied: boolean("discountApplied").default(false).notNull(),
+  discountAmount: int("discountAmount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -77,7 +84,7 @@ export const energyCoreTransactions = mysqlTable("energyCoreTransactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   amount: int("amount").notNull(),
-  type: mysqlEnum("type", ["initial", "referral_bonus", "game_win", "game_loss", "purchase", "daily_task", "achievement", "admin_adjustment"]).notNull(),
+  type: mysqlEnum("type", ["initial", "referral_bonus", "weekly_referral_reward", "game_win", "game_loss", "purchase", "daily_task", "achievement", "admin_adjustment"]).notNull(),
   description: text("description"),
   relatedId: int("relatedId"), // ID of related record (game, task, achievement, etc.)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -307,10 +314,14 @@ export const paymentTransactions = mysqlTable("paymentTransactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   amount: int("amount").notNull(), // in MMK
+  originalAmount: int("originalAmount"),
+  discountAmount: int("discountAmount").default(0).notNull(),
   type: mysqlEnum("type", ["energy_core", "premium"]).notNull(),
   paymentMethod: mysqlEnum("paymentMethod", ["kbz_pay", "aya_pay", "uab_pay"]).notNull(),
   status: mysqlEnum("status", ["pending", "completed", "failed"]).default("pending").notNull(),
+  durationMonths: int("durationMonths").default(1).notNull(),
   transactionId: varchar("transactionId", { length: 255 }),
+  referralId: int("referralId"),
   relatedId: int("relatedId"), // ID of related shop purchase or premium subscription
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -403,3 +414,23 @@ export const seasonalReferrerLeaderboardSnapshots = mysqlTable("seasonalReferrer
 
 export type SeasonalReferrerLeaderboardSnapshot = typeof seasonalReferrerLeaderboardSnapshots.$inferSelect;
 export type InsertSeasonalReferrerLeaderboardSnapshot = typeof seasonalReferrerLeaderboardSnapshots.$inferInsert;
+
+/**
+ * Weekly referral reward payouts
+ */
+export const referralWeeklyRewardPayouts = mysqlTable("referralWeeklyRewardPayouts", {
+  id: int("id").autoincrement().primaryKey(),
+  weekKey: varchar("weekKey", { length: 32 }).notNull().unique(),
+  weekStartAt: timestamp("weekStartAt").notNull(),
+  weekEndAt: timestamp("weekEndAt").notNull(),
+  referrerId: int("referrerId").notNull(),
+  successfulReferralCount: int("successfulReferralCount").default(0).notNull(),
+  fixedCommission: int("fixedCommission").notNull(),
+  bonusReward: int("bonusReward").notNull(),
+  totalReward: int("totalReward").notNull(),
+  paidAt: timestamp("paidAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReferralWeeklyRewardPayout = typeof referralWeeklyRewardPayouts.$inferSelect;
+export type InsertReferralWeeklyRewardPayout = typeof referralWeeklyRewardPayouts.$inferInsert;

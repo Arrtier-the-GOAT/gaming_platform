@@ -85,6 +85,12 @@ export default function Premium() {
   const [transactionId, setTransactionId] = useState("");
   const userProfile = trpc.user.getProfile.useQuery();
   const purchasePremium = trpc.premium.purchasePremium.useMutation();
+  const selectedDurationMonths =
+    selectedPlanForPayment?.id === 1 ? 1 : selectedPlanForPayment?.id === 2 ? 3 : selectedPlanForPayment?.id === 3 ? 5 : 1;
+  const checkoutQuote = trpc.premium.getCheckoutQuote.useQuery(
+    { durationMonths: selectedDurationMonths },
+    { enabled: !!user && !!selectedPlanForPayment }
+  );
 
   const handlePurchase = (planId: number) => {
     const selectedPlanData = PREMIUM_PLANS.find(p => p.id === planId);
@@ -95,18 +101,9 @@ export default function Premium() {
       return;
     }
 
-    let finalPrice = selectedPlanData.price;
-    if (userProfile.data?.isPremium && userProfile.data?.premiumExpiresAt) {
-      const now = new Date();
-      const expiresAt = new Date(userProfile.data.premiumExpiresAt);
-      const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysLeft >= 140) {
-        finalPrice = Math.floor(selectedPlanData.price * 0.8);
-      }
-    }
-
     // No balance check required - user can purchase premium anytime
-    setSelectedPlanForPayment({...selectedPlanData, price: finalPrice});
+    setSelectedPlan(planId);
+    setSelectedPlanForPayment(selectedPlanData);
     setShowPaymentModal(true);
     setPaymentConfirmed(false);
     setTransactionId("");
@@ -120,7 +117,7 @@ export default function Premium() {
 
     try {
       await purchasePremium.mutateAsync({
-        durationMonths: selectedPlanForPayment.id === 1 ? 1 : selectedPlanForPayment.id === 2 ? 3 : 5,
+        durationMonths: selectedDurationMonths,
         paymentMethod: "kbz_pay",
         transactionId: transactionId,
       });
@@ -156,6 +153,9 @@ export default function Premium() {
               ✓ You are a premium member
             </div>
           )}
+          <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+            Referral invite နဲ့ register ဝင်ထားသူတွေက first premium purchase မှာ 10% discount ရနိုင်ပါတယ်
+          </div>
         </div>
 
         {/* Benefits Overview */}
@@ -332,8 +332,27 @@ export default function Premium() {
                   </div>
                   <div className="flex items-end justify-between">
                     <p className="text-sm text-muted-foreground">Amount to Pay</p>
-                    <p className="text-3xl font-bold text-primary">{selectedPlanForPayment.price.toLocaleString()} MMK</p>
+                    <div className="text-right">
+                      {checkoutQuote.data?.hasReferralDiscount && (
+                        <p className="text-sm text-muted-foreground line-through">
+                          {checkoutQuote.data.basePrice.toLocaleString()} MMK
+                        </p>
+                      )}
+                      <p className="text-3xl font-bold text-primary">
+                        {(checkoutQuote.data?.finalPrice ?? selectedPlanForPayment.price).toLocaleString()} MMK
+                      </p>
+                    </div>
                   </div>
+                  {checkoutQuote.data?.hasReferralDiscount && (
+                    <p className="text-sm text-green-600 font-medium">
+                      Referral discount applied: -{checkoutQuote.data.discountAmount.toLocaleString()} MMK ({checkoutQuote.data.discountPercent}%)
+                    </p>
+                  )}
+                  {checkoutQuote.data?.abuseBlocked && (
+                    <p className="text-sm text-amber-600 font-medium">
+                      Referral discount is blocked because this account was flagged by same-device abuse detection.
+                    </p>
+                  )}
                 </div>
 
                 {!paymentConfirmed ? (

@@ -1,14 +1,25 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { sdk } from "./_core/sdk";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { getSessionCookieOptions } from "./core/cookies";
+import { sdk } from "./core/sdk";
+import { systemRouter } from "./core/systemRouter";
+import { publicProcedure, protectedProcedure, router } from "./core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb, getUserByReferralCode } from "./db";
-import { hashPassword, verifyPassword } from "./_core/password";
+import { hashPassword, verifyPassword } from "./core/password";
 import { nanoid } from "nanoid";
-import { ENV } from "./_core/env";
+import { ENV } from "./core/env";
+import {
+  ensureReferralSystemSchema,
+  getCurrentReferralWeekWindow,
+  getPremiumPlanQuote,
+  getReferralLeaderboardForWindow,
+  getRequestIp,
+  getWeeklyReferralRewardHistory,
+  hashUserAgent,
+  markReferralPremiumActivated,
+  runWeeklyReferralSettlement,
+} from "./referralSystem";
 import { 
   users, 
   localAuthAccounts,
@@ -95,6 +106,7 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         await ensureLocalAuthTable(db);
+        await ensureReferralSystemSchema(db);
 
         const email = normalizeEmail(input.email);
         const existingAccount = await db.select()
@@ -117,12 +129,18 @@ export const appRouter = router({
           userId = existingUser[0].id;
           openId = existingUser[0].openId;
         } else {
+          const signupIp = getRequestIp(ctx.req);
+          const signupUserAgentHash = hashUserAgent(ctx.req.headers["user-agent"] as string | undefined);
           const referrer = input.referralCode
             ? await getUserByReferralCode(input.referralCode)
             : undefined;
 
           if (input.referralCode && !referrer) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid referral code" });
+          }
+
+          if (referrer && normalizeEmail(referrer.email || "") === email) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Self-referral is not allowed" });
           }
 
           const referralCode = await generateUniqueReferralCode(db);
@@ -136,6 +154,8 @@ export const appRouter = router({
             loginMethod: "email",
             referralCode,
             referredBy: referrer?.referralCode,
+            signupIp,
+            signupUserAgentHash,
             mykBalance: 100,
             lastSignedIn: new Date(),
             role: openId === normalizeOwnerId(ENV.ownerOpenId || "") ? "admin" : "user",
@@ -155,23 +175,19 @@ export const appRouter = router({
           }
 
           if (referrer) {
+            const suspicious =
+              !!signupIp &&
+              !!referrer.signupIp &&
+              signupIp === referrer.signupIp &&
+              signupUserAgentHash === referrer.signupUserAgentHash;
+
             await db.insert(referrals).values({
               referrerId: referrer.id,
               refereeId: userId,
               referralCode: referrer.referralCode,
-              bonusAwarded: true,
-              bonusAwardedAt: new Date(),
-            });
-
-            await db.update(users)
-              .set({ mykBalance: referrer.mykBalance + 200 })
-              .where(eq(users.id, referrer.id));
-
-            await db.insert(energyCoreTransactions).values({
-              userId: referrer.id,
-              amount: 200,
-              type: "referral_bonus",
-              description: "Referral bonus for new user signup",
+              bonusAwarded: false,
+              suspicious,
+              suspicionReason: suspicious ? "matching_device_fingerprint" : null,
             });
           }
         }
@@ -322,33 +338,6 @@ export const appRouter = router({
           if (!referrer) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid referral code" });
           }
-
-          // Award bonus to referrer if not already awarded
-          const existingReferral = await db.select().from(referrals)
-            .where(and(
-              eq(referrals.referralCode, input.referralCode),
-              eq(referrals.bonusAwarded, false)
-            )).limit(1);
-
-          if (existingReferral.length > 0) {
-            // Award 200 energy core to referrer
-            await db.update(users)
-              .set({ mykBalance: referrer.mykBalance + 200 })
-              .where(eq(users.id, referrer.id));
-
-            // Record transaction
-            await db.insert(energyCoreTransactions).values({
-              userId: referrer.id,
-              amount: 200,
-              type: "referral_bonus",
-              description: "Referral bonus for new user signup",
-            });
-
-            // Mark referral as bonus awarded
-            await db.update(referrals)
-              .set({ bonusAwarded: true, bonusAwardedAt: new Date() })
-              .where(eq(referrals.referralCode, input.referralCode));
-          }
         }
 
         return { success: true };
@@ -357,13 +346,8 @@ export const appRouter = router({
     getTopReferrers: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      // Get users with most successful referrals
-      const result = await db.select().from(users)
-        .orderBy(desc(users.mykBalance))
-        .limit(10);
-
-      return result;
+      const currentWeek = getCurrentReferralWeekWindow();
+      return getReferralLeaderboardForWindow(db, currentWeek, 10);
     }),
   }),
 
@@ -602,54 +586,34 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-        const referrerStats = await db.select({
-          referrerId: referrals.referrerId,
-          premiumUserCount: sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`.as('premiumUserCount'),
-        })
-          .from(referrals)
-          .innerJoin(users, eq(referrals.refereeId, users.id))
-          .groupBy(referrals.referrerId)
-          .orderBy(desc(sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`))
-          .limit(input.limit);
-
-        const result = await Promise.all(
-          referrerStats.map(async (entry: any) => {
-            const referrerUser = await db.select().from(users)
-              .where(eq(users.id, entry.referrerId)).limit(1);
-            return {
-              referrerId: entry.referrerId,
-              referrerName: referrerUser[0]?.name || "Unknown",
-              referrerEmail: referrerUser[0]?.email,
-              premiumUserCount: (entry.premiumUserCount as number) || 0,
-            };
-          })
-        );
-
-        return result;
+        const currentWeek = getCurrentReferralWeekWindow();
+        return getReferralLeaderboardForWindow(db, currentWeek, input.limit);
       }),
 
     getReferrerRank: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const referrerStats = await db.select({
-        referrerId: referrals.referrerId,
-        premiumUserCount: sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`.as('premiumUserCount'),
-      })
-        .from(referrals)
-        .innerJoin(users, eq(referrals.refereeId, users.id))
-        .groupBy(referrals.referrerId)
-        .orderBy(desc(sql`COUNT(DISTINCT CASE WHEN ${users.isPremium} = true THEN ${referrals.refereeId} END)`));
-
-      const rank = referrerStats.findIndex((entry: any) => entry.referrerId === ctx.user.id) + 1;
-      const userEntry = referrerStats.find((entry: any) => entry.referrerId === ctx.user.id);
+      const currentWeek = getCurrentReferralWeekWindow();
+      const referrerStats = await getReferralLeaderboardForWindow(db, currentWeek, 1000);
+      const rank = referrerStats.findIndex(entry => entry.referrerId === ctx.user.id) + 1;
+      const userEntry = referrerStats.find(entry => entry.referrerId === ctx.user.id);
 
       return {
         rank: rank || null,
-        premiumUserCount: (userEntry?.premiumUserCount as number) || 0,
+        premiumUserCount: userEntry?.successfulReferralCount || 0,
+        weekKey: currentWeek.weekKey,
+        weekStartAt: currentWeek.start,
+        weekEndAt: currentWeek.end,
       };
     }),
+
+    getWeeklyRewardHistory: publicProcedure
+      .input(z.object({ limit: z.number().default(10) }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        return getWeeklyReferralRewardHistory(db, input.limit);
+      }),
 
     // Season management
     getCurrentSeason: publicProcedure.query(async () => {
@@ -762,6 +726,29 @@ export const appRouter = router({
 
   // Premium subscription
   premium: router({
+    getCheckoutQuote: protectedProcedure
+      .input(z.object({
+        durationMonths: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const quote = await getPremiumPlanQuote(db, ctx.user.id, input.durationMonths);
+        if (!quote) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+        }
+
+        return {
+          durationMonths: input.durationMonths,
+          basePrice: quote.basePrice,
+          discountPercent: quote.discountPercent,
+          discountAmount: quote.discountAmount,
+          finalPrice: quote.finalPrice,
+          hasReferralDiscount: quote.hasReferralDiscount,
+          abuseBlocked: quote.abuseBlocked,
+        };
+      }),
     getPlans: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -792,34 +779,53 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-        const plan = await db.select().from(premiumSubscriptions)
-          .where(eq(premiumSubscriptions.durationMonths, input.durationMonths)).limit(1);
-
-        if (!plan[0]) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
-        }
+        await ensureReferralSystemSchema(db);
 
         // Validate transaction ID format (5 digits)
         if (!/^\d{5}$/.test(input.transactionId)) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid transaction ID format" });
         }
 
+        const [pendingRequest] = await db.select()
+          .from(paymentTransactions)
+          .where(and(
+            eq(paymentTransactions.userId, ctx.user.id),
+            eq(paymentTransactions.type, "premium"),
+            eq(paymentTransactions.status, "pending")
+          ))
+          .limit(1);
+
+        if (pendingRequest) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "You already have a pending premium request" });
+        }
+
+        const quote = await getPremiumPlanQuote(db, ctx.user.id, input.durationMonths);
+        if (!quote) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+        }
+
         // Create payment transaction with PENDING status (waiting for admin approval)
         await db.insert(paymentTransactions).values({
           userId: ctx.user.id,
-          amount: plan[0].priceMMK,
+          amount: quote.finalPrice,
+          originalAmount: quote.basePrice,
+          discountAmount: quote.discountAmount,
           type: "premium",
           paymentMethod: input.paymentMethod,
           status: "pending", // Waiting for admin approval
+          durationMonths: input.durationMonths,
           transactionId: input.transactionId,
+          referralId: quote.referral?.id ?? null,
         });
 
         return {
           success: true,
           message: "Payment request submitted. Waiting for admin approval.",
           transactionId: input.transactionId,
-          amount: plan[0].priceMMK,
+          amount: quote.finalPrice,
+          originalAmount: quote.basePrice,
+          discountAmount: quote.discountAmount,
+          hasReferralDiscount: quote.hasReferralDiscount,
           durationMonths: input.durationMonths,
         };
       }),
@@ -1380,6 +1386,7 @@ export const appRouter = router({
             ...req,
             userName: user[0]?.name || "Unknown",
             userEmail: user[0]?.email || "Unknown",
+            finalAmount: req.amount,
           };
         })
       );
@@ -1396,6 +1403,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await ensureReferralSystemSchema(db);
 
         const paymentTx = await db.select().from(paymentTransactions)
           .where(eq(paymentTransactions.id, input.paymentTransactionId)).limit(1);
@@ -1413,11 +1421,11 @@ export const appRouter = router({
           .where(eq(paymentTransactions.id, input.paymentTransactionId));
 
         const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + input.durationMonths);
+        expiresAt.setMonth(expiresAt.getMonth() + (paymentTx[0].durationMonths || input.durationMonths));
 
         await db.insert(premiumSubscriptions).values({
           userId: paymentTx[0].userId,
-          durationMonths: input.durationMonths,
+          durationMonths: paymentTx[0].durationMonths || input.durationMonths,
           priceMMK: paymentTx[0].amount,
           expiresAt,
         });
@@ -1429,8 +1437,25 @@ export const appRouter = router({
           })
           .where(eq(users.id, paymentTx[0].userId));
 
+        if (paymentTx[0].referralId) {
+          await db.update(referrals)
+            .set({
+              discountApplied: true,
+              discountAmount: paymentTx[0].discountAmount || 0,
+            })
+            .where(eq(referrals.id, paymentTx[0].referralId));
+        }
+
+        await markReferralPremiumActivated(db, paymentTx[0].userId, new Date());
+
         return { success: true, expiresAt };
       }),
+
+    processWeeklyReferralRewards: adminProcedure.mutation(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      return runWeeklyReferralSettlement(db, new Date());
+    }),
 
     // Reject premium request
     rejectPremiumRequest: adminProcedure

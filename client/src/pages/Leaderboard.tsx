@@ -14,6 +14,7 @@ export default function Leaderboard() {
   // Current season leaderboards
   const gameLeaderboard = trpc.leaderboard.getTopPlayers.useQuery({ limit: 10 });
   const referrerLeaderboard = trpc.leaderboard.getTopReferrers.useQuery({ limit: 10 });
+  const weeklyRewardHistory = trpc.leaderboard.getWeeklyRewardHistory.useQuery({ limit: 5 });
   
   // Historical season leaderboards
   const seasonGameLeaderboard = trpc.leaderboard.getGameLeaderboardForSeason.useQuery(
@@ -167,7 +168,14 @@ export default function Leaderboard() {
                 <Users className="w-5 h-5" />
                 Top Referrers
               </CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">🎉 Ranked by premium users referred</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                🎉 Weekly ranking by successful premium referrals only
+              </p>
+              {!selectedSeasonId && referrerLeaderboard.data?.[0] && (
+                <p className="text-xs text-muted-foreground">
+                  Week: {formatDate(referrerLeaderboard.data[0].weekStartAt)} to {formatDate(referrerLeaderboard.data[0].weekEndAt)}
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -189,8 +197,12 @@ export default function Leaderboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-purple-600">{referrer.premiumUserCount}</p>
-                        <p className="text-xs text-muted-foreground">premium users</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {selectedSeasonId ? referrer.premiumUserCount : referrer.successfulReferralCount}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedSeasonId ? "premium users" : "successful referrals"}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -200,6 +212,49 @@ export default function Leaderboard() {
               )}
             </CardContent>
           </Card>
+
+          {!selectedSeasonId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gift className="w-5 h-5" />
+                  Weekly Referral Reward History
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Top 1 receives 3,000 fixed commission + 1,000 bonus = 4,000 total
+                </p>
+              </CardHeader>
+              <CardContent>
+                {weeklyRewardHistory.isLoading ? (
+                  <p className="text-center py-8">Loading reward history...</p>
+                ) : weeklyRewardHistory.data && weeklyRewardHistory.data.length > 0 ? (
+                  <div className="space-y-3">
+                    {weeklyRewardHistory.data.map((reward) => (
+                      <div
+                        key={reward.id}
+                        className="flex items-center justify-between p-4 bg-muted rounded-lg"
+                      >
+                        <div>
+                          <p className="font-bold">{reward.winnerName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Week {reward.weekKey} • {reward.successfulReferralCount} successful referrals
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-green-600">{reward.totalReward.toLocaleString()} MMK</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(reward.weekStartAt)} - {formatDate(reward.weekEndAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center py-8 text-muted-foreground">No weekly referral rewards paid yet</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

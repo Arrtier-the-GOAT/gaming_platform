@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const pendingRequests = trpc.admin.getPendingPremiumRequests.useQuery();
   const approveMutation = trpc.admin.approvePremiumRequest.useMutation();
   const rejectMutation = trpc.admin.rejectPremiumRequest.useMutation();
+  const processReferralRewardsMutation = trpc.admin.processWeeklyReferralRewards.useMutation();
 
   if (!user || user.role !== "admin") {
     return (
@@ -338,13 +339,34 @@ export default function AdminDashboard() {
                 <CardTitle className="text-white">Pending Premium Requests</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="flex justify-end mb-4">
+                  <Button
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={() => {
+                      processReferralRewardsMutation.mutate(undefined, {
+                        onSuccess: (result) => {
+                          if (result.processed) {
+                            toast.success(`Weekly referral reward paid for week ${result.weekKey}`);
+                          } else {
+                            toast.message(`Weekly referral settlement skipped: ${result.reason}`);
+                          }
+                        },
+                        onError: () => toast.error("Failed to process weekly referral rewards"),
+                      });
+                    }}
+                    disabled={processReferralRewardsMutation.isPending}
+                  >
+                    {processReferralRewardsMutation.isPending ? "Processing..." : "Run Weekly Referral Reward"}
+                  </Button>
+                </div>
                 {pendingRequests.isLoading ? (
                   <p className="text-slate-400">Loading requests...</p>
                 ) : pendingRequests.data && pendingRequests.data.length > 0 ? (
                   <div className="space-y-4">
                     {pendingRequests.data.map((req) => (
                       <div key={req.id} className="bg-slate-700 p-4 rounded-lg space-y-3">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                           <div>
                             <p className="text-xs text-slate-400">User</p>
                             <p className="text-sm font-semibold text-white">{req.userName}</p>
@@ -355,11 +377,20 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-xs text-slate-400">Amount</p>
-                            <p className="text-sm font-semibold text-green-400">{req.amount} MMK</p>
+                            <p className="text-sm font-semibold text-green-400">{req.finalAmount} MMK</p>
+                            {!!req.discountAmount && (
+                              <p className="text-xs text-slate-400">
+                                From {req.originalAmount} MMK (-{req.discountAmount} MMK)
+                              </p>
+                            )}
                           </div>
                           <div>
                             <p className="text-xs text-slate-400">Transaction ID</p>
                             <p className="text-sm font-mono text-white">{req.transactionId}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-400">Plan</p>
+                            <p className="text-sm text-white">{req.durationMonths} month(s)</p>
                           </div>
                         </div>
                         <div className="flex gap-2 pt-2">
@@ -368,7 +399,7 @@ export default function AdminDashboard() {
                             className="bg-green-600 hover:bg-green-700"
                             onClick={() => {
                               approveMutation.mutate(
-                                { paymentTransactionId: req.id, durationMonths: 1 },
+                                { paymentTransactionId: req.id, durationMonths: req.durationMonths ?? 1 },
                                 {
                                   onSuccess: () => {
                                     toast.success("Premium request approved!");

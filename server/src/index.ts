@@ -1,12 +1,10 @@
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
-import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./routers";
 import { createContext } from "./core/trpc/context";
 import { serveStatic, setupVite } from "./core/utils/vite";
-import { startWeeklyReferralSettlementWorker } from "./modules/referral/service";
 
 
 

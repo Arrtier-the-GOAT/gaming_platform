@@ -10,7 +10,7 @@ import { nanoid } from "nanoid";
 import { ENV } from "../../core/utils/env";
 import { ensureReferralSystemSchema, getRequestIp, hashUserAgent } from "../referral/service";
 import { users, localAuthAccounts, referrals } from "../../../migrations/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const normalizeOwnerId = (value: string) => value.trim().replace(/^"|"$/g, "");
@@ -23,19 +23,6 @@ const isOwnerUser = (user: { id: number; openId: string }) => {
   const paddedNumericId = numericId.padStart(12, "0");
 
   return user.openId === ownerId || numericId === ownerId || paddedNumericId === ownerId;
-};
-
-const ensureLocalAuthTable = async (db: NonNullable<Awaited<ReturnType<typeof getDb>>>) => {
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS localAuthAccounts (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      userId INT NOT NULL UNIQUE,
-      email VARCHAR(320) NOT NULL UNIQUE,
-      passwordHash VARCHAR(255) NOT NULL,
-      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
 };
 
 const generateUniqueReferralCode = async (db: NonNullable<Awaited<ReturnType<typeof getDb>>>) => {
@@ -61,8 +48,6 @@ export const authRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await ensureLocalAuthTable(db);
-      await ensureReferralSystemSchema(db);
 
       const email = normalizeEmail(input.email);
       const existingAccount = await db.select().from(localAuthAccounts).where(eq(localAuthAccounts.email, email)).limit(1);
@@ -162,7 +147,6 @@ export const authRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await ensureLocalAuthTable(db);
 
       const email = normalizeEmail(input.email);
       const account = await db.select().from(localAuthAccounts).where(eq(localAuthAccounts.email, email)).limit(1);
